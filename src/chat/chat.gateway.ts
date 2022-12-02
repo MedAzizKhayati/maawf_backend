@@ -45,6 +45,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @GetUser() user: User,
   ) {
     this.chatService.sendMessage(payload, user.profile.id);
+    this.logger.log(`Profile ${user.profile.id} sent message to Group:${payload.groupChatId}`);
     return true;
   }
 

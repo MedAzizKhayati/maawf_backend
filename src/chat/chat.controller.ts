@@ -37,7 +37,7 @@ export class ChatController {
         @GetUser() user: User
     ) {
         const isUserInGroupChat = await this.chatService.isUserInGroupChat(roomId, user.profile.id);
-        if (!isUserInGroupChat) throw new UnauthorizedException('You are not in this group chat');
+        if (!isUserInGroupChat) throw new UnauthorizedException();
         return this.chatService.getMessages(roomId, page, take);
     }
 
@@ -48,7 +48,7 @@ export class ChatController {
         @Body() updateGroupChatDTO: UpdateGroupChatDTO,
     ) {
         const isUserInGroupChat = await this.chatService.isUserAdminOfGroupChat(updateGroupChatDTO.id, user.profile.id);
-        if (!isUserInGroupChat) throw new UnauthorizedException('You are not in this group chat');
+        if (!isUserInGroupChat) throw new UnauthorizedException();
         return this.chatService.updateGroupChat(updateGroupChatDTO);
     }
 

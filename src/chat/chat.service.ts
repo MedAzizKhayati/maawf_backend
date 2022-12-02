@@ -48,7 +48,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
                 typeof member === 'string' ?
                     this.profileRepository.create({ id: member }) :
                     member
-        ) as Profile[];
+        );
 
         members = [...members, creator]
             .filter(
@@ -94,7 +94,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
                 typeof member === 'string' ?
                     this.profileRepository.create({ id: member }) :
                     member
-        ) as Profile[];
+        );
 
         const groupChatToProfiles = [
             ...groupChat.groupChatToProfiles,
