@@ -5,10 +5,16 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  MessageBody
+  MessageBody,
+  ConnectedSocket
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
+import { ChatService } from './chat.service';
+import { WsGuard } from '@/auth/guards/jwt-ws-auth.guard';
+import { GetUser } from '@/auth/decorators/user.decorator';
+import { User } from '@/auth/entities/user.entity';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -18,16 +24,33 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('ChatGateway');
 
-  @SubscribeMessage('msg-to-server')
-  handleMessage(
-    @MessageBody() payload: string,
+  constructor(
+    private chatService: ChatService
+  ) { }
+
+  @UseGuards(WsGuard)
+  @SubscribeMessage('connect-to-rooms')
+  enterGroupChat(
+    @ConnectedSocket() client: Socket,
+    @GetUser() user: User
   ) {
-    this.server.emit('msg-to-client', payload);
-    return payload;
+    client.join(user.profile.id);
+    return true;
+  }
+
+  @UseGuards(WsGuard)
+  @SubscribeMessage('send-message')
+  handleMessage(
+    @MessageBody() payload: SendMessageDto,
+    @GetUser() user: User,
+  ) {
+    this.chatService.sendMessage(payload, user.profile.id);
+    return true;
   }
 
   afterInit() {
     this.logger.log('Init');
+    this.chatService.setServer(this.server);
   }
 
   handleDisconnect(client: Socket) {

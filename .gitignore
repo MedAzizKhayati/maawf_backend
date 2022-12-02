@@ -5,6 +5,7 @@
 # env
 .env
 .env*.local
+.env*.prod
 
 # Logs
 logs
