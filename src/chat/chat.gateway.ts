@@ -35,6 +35,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @GetUser() user: User
   ) {
     client.join(user.profile.id);
+    this.logger.log(`Profile ${user.profile.id} connected to chat`);
     return true;
   }
 

@@ -17,7 +17,12 @@ export class WsGuard implements CanActivate {
         try {
 
             const client: Socket = context.switchToWs().getClient<Socket>();
-            const bearerToken = client.handshake.headers.authorization?.split(' ')[1];
+            const { headers, query } = client.handshake;
+            const bearerToken = (
+                headers.authorization ||
+                query.authorization as string
+            )?.split(' ')[1];
+
             if (!bearerToken) {
                 throw new WsException('Unauthorized');
             }
@@ -26,6 +31,8 @@ export class WsGuard implements CanActivate {
             if (!user) {
                 throw new WsException('User not found');
             }
+
+
             context.switchToHttp().getRequest().user = user;
             return Boolean(user);
         } catch (err) {

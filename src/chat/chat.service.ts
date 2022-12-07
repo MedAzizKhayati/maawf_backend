@@ -214,7 +214,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
                                 id
                             }
                         },
-                        relations: ['groupChat'],
+                        relations: ['groupChat', 'groupChat.groupChatToProfiles.profile'],
                         order: {
                             updatedAt: 'DESC'
                         },
