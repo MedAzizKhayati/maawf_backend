@@ -21,6 +21,13 @@ export class ChatController {
         return this.chatService.findByProfile(user.profile, page, take);
     }
 
+    @Get('room/:roomId')
+    findOne(
+        @Param('roomId') roomId: string,
+    ) {
+        return this.chatService.findOne(roomId);
+    }
+
     @Post('room')
     createGroupChat(
         @GetUser() user: User,

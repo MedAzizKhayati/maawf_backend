@@ -16,6 +16,7 @@ import { GetUser } from '@/auth/decorators/user.decorator';
 import { User } from '@/auth/entities/user.entity';
 import { SendMessageDto } from './dto/send-message.dto';
 
+@UseGuards(WsGuard)
 @WebSocketGateway({
   namespace: 'chat',
 })
@@ -28,7 +29,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private chatService: ChatService
   ) { }
 
-  @UseGuards(WsGuard)
   @SubscribeMessage('connect-to-rooms')
   enterGroupChat(
     @ConnectedSocket() client: Socket,
@@ -39,7 +39,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return true;
   }
 
-  @UseGuards(WsGuard)
   @SubscribeMessage('send-message')
   handleMessage(
     @MessageBody() payload: SendMessageDto,
@@ -47,6 +46,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     this.chatService.sendMessage(payload, user.profile.id);
     this.logger.log(`Profile ${user.profile.id} sent message to Group:${payload.groupChatId}`);
+    return true;
+  }
+
+  @SubscribeMessage('mark-as-seen')
+  markAsRead(
+    @MessageBody() messageId: string,
+    @GetUser() user: User,
+  ) {
+    this.chatService.markAsRead(messageId, user.profile.id);
     return true;
   }
 

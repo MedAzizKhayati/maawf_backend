@@ -141,7 +141,14 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             order: {
                 createdAt: 'DESC'
             }
-        }, page, take));
+        }, page, take)).then(messages => {
+            messages.forEach((message: any) => {
+                const id = message.profile;
+                message.profile = this.profileRepository.create();
+                message.profile.id = id;
+            });
+            return messages;
+        });
     }
 
     async sendMessage(message: SendMessageDto, sender: string | Profile): Promise<Message> {
@@ -157,20 +164,8 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
 
         const [messageResult, concernedProfiles] = await Promise.all([
             this.messageRepository.save(messageEntity),
-            this.groupChatToProfileRepo.find({
-                where: {
-                    groupChat: {
-                        id: message.groupChatId
-                    },
-                    profile: {
-                        id: Not(sender.id)
-                    }
-                },
-                relations: ['profile']
-            }).then(
-                crToProfiles => crToProfiles
-                    .map(crToProfile => crToProfile.profile.id)
-            )
+            this.getConcernedProfiles(groupChat)
+                .then(profiles => profiles.map(profile => profile.id))
         ]);
         if (this.server)
             this.server.to(concernedProfiles).emit('message', {
@@ -180,6 +175,46 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
 
         return messageResult;
     }
+
+    async markAsRead(message: Message | string, profile: Profile | string): Promise<Message> {
+        message = typeof message === 'string' ?
+            await this.messageRepository.findOne({
+                where: { id: message },
+                relations: ['groupChat']
+            }) :
+            message;
+        profile = typeof profile === 'string' ? profile : profile.id;
+        message.seen[profile] = true;
+        await this.messageRepository.save(message);
+        const savedMessage = await this.messageRepository.findOne({
+            where: { id: message.id },
+            relations: ['groupChat', 'profile']
+        });
+        const concernedProfiles = await this.getConcernedProfiles(message.groupChat)
+            .then(profiles => profiles.map(profile => profile.id));
+        if (this.server)
+            this.server.to(concernedProfiles).emit('message', {
+                groupChatId: message.groupChat.id,
+                message: savedMessage
+            });
+        return savedMessage;
+    }
+
+    async getConcernedProfiles(groupChat: GroupChat | string): Promise<Profile[]> {
+        const id = typeof groupChat === 'string' ? groupChat : groupChat.id;
+        return this.groupChatToProfileRepo.find({
+            where: {
+                groupChat: {
+                    id
+                }
+            },
+            relations: ['profile']
+        }).then(
+            crToProfiles => crToProfiles
+                .map(crToProfile => crToProfile.profile)
+        );
+    }
+
 
     async addMember(groupChat: GroupChat | string, member: Profile | string): Promise<GroupChat> {
         const id = typeof groupChat === 'string' ? groupChat : groupChat.id;
@@ -216,7 +251,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
                         },
                         relations: ['groupChat', 'groupChat.groupChatToProfiles.profile'],
                         order: {
-                            updatedAt: 'DESC'
+                            updatedAt: 'ASC'
                         },
                     }, page, take))
                 .then(res => res.map(crToProfile => crToProfile.groupChat));
