@@ -167,6 +167,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         const messageEntity = new Message();
         messageEntity.groupChat = groupChat;
         messageEntity.profile = sender;
+        messageEntity.seen = { [sender.id]: true };
         messageEntity.data = {
             text: message.text,
             attachments: message.attachments
