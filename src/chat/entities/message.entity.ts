@@ -16,15 +16,13 @@ export type SeenData = {
 export class Message extends GenericEntity {
     @Column({
         type: "longtext",
-        default: JSON.stringify({}),
     })
-    data: MessageData;
+    data: MessageData = {};
 
     @Column({
         type: "longtext",
-        default: JSON.stringify({}),
     })
-    seen: SeenData;
+    seen: SeenData = {};
 
     @ManyToOne(
         () => GroupChat,
