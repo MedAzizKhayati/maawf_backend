@@ -1,6 +1,6 @@
 import { GenericEntity } from "@/generics/entity";
 import { Profile } from "@/profile/entities/profile.entity";
-import { AfterInsert, AfterLoad, AfterUpdate, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
+import { AfterInsert, AfterLoad, AfterRecover, AfterUpdate, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
 import { GroupChat } from "./group-chat.entity";
 
 export type MessageData = {
@@ -49,6 +49,7 @@ export class Message extends GenericEntity {
         }
     }
 
+    @AfterRecover()
     @AfterLoad()
     @AfterInsert()
     @AfterUpdate()

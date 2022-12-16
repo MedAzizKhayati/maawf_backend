@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { Body, Controller, Get, Param, Patch, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
+import { UpdateMemberDto } from './dto/update-member.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -18,7 +19,7 @@ export class ChatController {
         @Query('page') page = 1,
         @Query('limit') take = 10,
     ) {
-        return this.chatService.findByProfile(user.profile, page, take);
+        return this.chatService.findChatsByProfile(user.profile, page, take);
     }
 
     @Get('room/:roomId')
@@ -57,6 +58,17 @@ export class ChatController {
         const isUserInGroupChat = await this.chatService.isUserAdminOfGroupChat(updateGroupChatDTO.id, user.profile.id);
         if (!isUserInGroupChat) throw new UnauthorizedException();
         return this.chatService.updateGroupChat(updateGroupChatDTO);
+    }
+
+    @Patch('members/:chatId')
+    async updateMember(
+        @GetUser() user: User,
+        @Param('chatId') chatId: string,
+        @Body() updateMemberDto: UpdateMemberDto,
+    ) {
+        const isUserInGroupChat = await this.chatService.isUserInGroupChat(chatId, user.profile.id);
+        if (!isUserInGroupChat) throw new UnauthorizedException("You don't have permission to update this group chat");
+        return this.chatService.updateMember(chatId, updateMemberDto);
     }
 
 }

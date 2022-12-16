@@ -1,12 +1,13 @@
 import { GenericsService } from '@/generics/service';
 import { Profile } from '@/profile/entities/profile.entity';
 import addPaginationToOptions from '@/utils/addPaginationToOptions';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Server } from 'socket.io';
 import { Not, Repository } from 'typeorm';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
+import { UpdateMemberDto } from './dto/update-member.dto';
 import { GroupChatToProfile } from './entities/group-chat-to-profile.entity';
 import { GroupChat } from './entities/group-chat.entity';
 import { Message } from './entities/message.entity';
@@ -66,7 +67,16 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         groupChat.groupChatToProfiles = groupChatToProfiles;
         if (members.length <= 2) groupChat.isPrivate = true;
 
-        return await this.groupChatRepository.save(groupChat);
+        const gc = await this.groupChatRepository.save(groupChat);
+
+        // send a hello message
+        const message = new SendMessageDto();
+        message.groupChatId = gc.id;
+        message.text = '👋';
+
+        await this.sendMessage(message, creator);
+
+        return gc;
     }
 
     async isUserAdminOfGroupChat(groupChat: GroupChat | string, profile: Profile | string): Promise<boolean> {
@@ -238,23 +248,72 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             }).then(() => this.findOne(groupChatId));
     }
 
-    async findByProfile(profile: Profile | string, page = 1, take = 10): Promise<GroupChat[]> {
+    async findOne(id: string): Promise<GroupChat> {
+        const groupChat = await this.groupChatRepository
+            .createQueryBuilder('gc')
+            .where('gc.id = :id', { id })
+            .leftJoinAndSelect('gc.groupChatToProfiles', 'gctps')
+            .leftJoinAndSelect('gctps.profile', 'profiles')
+            .leftJoinAndMapOne('gc.lastMessage', Message, 'messages', 'messages.groupChatId = gc.id')
+            .leftJoinAndSelect('messages.profile', 'p')
+            .orderBy('messages.createdAt', 'DESC')
+            .getOne() as any;
+
+        groupChat?.lastMessage?.fromJson();
+
+        return groupChat;
+    }
+
+    async findChatsByProfile(profile: Profile | string, page = 1, take = 10): Promise<any> {
         const id = typeof profile === 'string' ? profile : profile.id;
-        const groupChatToProfiles =
-            await this.groupChatToProfileRepo.
-                find(
-                    addPaginationToOptions<GroupChatToProfile>({
-                        where: {
-                            profile: {
-                                id
-                            }
-                        },
-                        relations: ['groupChat', 'groupChat.groupChatToProfiles.profile'],
-                        order: {
-                            updatedAt: 'ASC'
-                        },
-                    }, page, take))
-                .then(res => res.map(crToProfile => crToProfile.groupChat));
-        return groupChatToProfiles;
+        const results = await this.groupChatToProfileRepo
+            .createQueryBuilder('gctp')
+            .where('gctp.profileId = :id', { id })
+            .leftJoinAndSelect('gctp.groupChat', 'gc')
+            .leftJoinAndSelect('gc.groupChatToProfiles', 'gctps')
+            .leftJoinAndSelect('gctps.profile', 'profiles')
+            .leftJoinAndMapOne(
+                'gc.lastMessage',
+                Message,
+                'messages',
+                `messages.groupChatId = gc.id and 
+                 messages.createdAt = (
+                    select max(messages.createdAt) from message messages where messages.groupChatId = gc.id
+                )`
+            )
+            .leftJoinAndSelect('messages.profile', 'p')
+            .orderBy('messages.createdAt', 'DESC')
+            .skip((page - 1) * take)
+            .take(take)
+            .getMany();
+
+        const groupChats = results.map(res => {
+            const groupChat = res.groupChat as any;
+            groupChat?.lastMessage?.fromJson();
+            return groupChat;
+        });
+
+        return groupChats;
+    }
+
+    async updateMember(
+        groupChat: GroupChat | string,
+        updateMemberDto: UpdateMemberDto
+    ): Promise<GroupChatToProfile> {
+        const id = typeof groupChat === 'string' ? groupChat : groupChat.id;
+        const groupChatToProfileId = updateMemberDto.id;
+        updateMemberDto.nickname = updateMemberDto.nickname.trim();
+        const groupChatToProfile = await this.groupChatToProfileRepo.findOne({
+            where: {
+                id: groupChatToProfileId,
+                groupChat: { id }
+            }
+        });
+        if (!groupChatToProfile)
+            throw new NotFoundException('This user is not a member of this group chat');
+
+        groupChatToProfile.nickname = updateMemberDto.nickname;
+
+        return this.groupChatToProfileRepo.save(groupChatToProfile);
     }
 }
