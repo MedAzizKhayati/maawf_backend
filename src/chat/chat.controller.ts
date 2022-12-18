@@ -34,7 +34,7 @@ export class ChatController {
         @GetUser() user: User,
         @Body() members: string[]
     ) {
-        return this.chatService.createGroupChat(user.profile, members);
+        return this.chatService.createChat(user.profile, members);
     }
 
     @Get('messages/:roomId')

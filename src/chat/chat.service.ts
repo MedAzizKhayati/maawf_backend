@@ -28,7 +28,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         this.server = server;
     }
 
-    async getGroupChats(profile: Profile | string): Promise<GroupChat[]> {
+    async getChats(profile: Profile | string): Promise<GroupChat[]> {
         const id = typeof profile === 'string' ? profile : profile.id;
         const groupChatToProfile = await this.groupChatToProfileRepo.find({
             where: {
@@ -43,7 +43,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         return groupChat;
     }
 
-    async createGroupChat(creator: Profile, members: Profile[] | string[]): Promise<GroupChat> {
+    async createChat(creator: Profile, members: Profile[] | string[]): Promise<GroupChat> {
         members = members.map(
             (member: Profile | string) =>
                 typeof member === 'string' ?
@@ -316,5 +316,23 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         groupChatToProfile.nickname = updateMemberDto.nickname;
 
         return this.groupChatToProfileRepo.save(groupChatToProfile);
+    }
+
+    async findChat(members: Profile[] | string[], isPrivate = false) {
+        const ids = members.map((member: Profile | string) => typeof member === 'string' ? member : member.id);
+        const groupChats = await this.groupChatRepository
+            .createQueryBuilder('gc')
+            .leftJoinAndSelect('gc.groupChatToProfiles', 'gctps')
+            .leftJoinAndSelect('gctps.profile', 'profiles')
+            .where('profiles.id IN (:...ids)', { ids })
+            .andWhere('gc.isPrivate = :isPrivate', { isPrivate })
+            .getMany();
+
+        const groupChat = groupChats.find(gc => {
+            const profiles = gc.groupChatToProfiles.map(gctp => gctp.profile.id);
+            return profiles.length === ids.length && profiles.every(profile => ids.includes(profile));
+        });
+
+        return groupChat;
     }
 }
