@@ -12,12 +12,13 @@ export class FrienshipController {
 
     @Get()
     findAll(
+        @GetUser() user: User,
         @Query('page') page = 1,
         @Query('limit') take = 10,
         @Query('status') status: Friendship['status'] = 'accepted',
-        @GetUser() user: User,
+        @Query('type') type: "all" | "incoming" | "outgoing",
     ) {
-        return this.friendshipService.findAll(user.profile, { page, take, status });
+        return this.friendshipService.findAll(user.profile, { page, take, status, type });
     }
 
     @Post(':id')

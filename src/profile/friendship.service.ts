@@ -16,15 +16,22 @@ export class FriendshipSerivce {
         private readonly chatService: ChatService,
     ) { }
 
-    async findAll(profile: Profile | string, options?: { page?: number, take?: number, status?: Friendship['status'] }) {
+    async findAll(
+        profile: Profile | string,
+        options?: {
+            page?: number,
+            take?: number,
+            status?: Friendship['status'],
+            type?: "all" | "incoming" | "outgoing"
+        }) {
         profile = typeof profile === 'string' ? profile : profile.id;
         return this.frienshipRepository.find(addPaginationToOptions<Friendship>({
             where: [
-                {
+                options.type !== "incoming" && {
                     sender: { id: profile },
                     status: options?.status || 'accepted'
                 },
-                {
+                options.type !== "outgoing" && {
                     receiver: { id: profile },
                     status: options?.status || 'accepted'
                 }
