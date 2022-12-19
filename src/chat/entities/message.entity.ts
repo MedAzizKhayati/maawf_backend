@@ -17,12 +17,12 @@ export class Message extends GenericEntity {
     @Column({
         type: "longtext",
     })
-    data: MessageData = {};
+    data: MessageData;
 
     @Column({
         type: "longtext",
     })
-    seen: SeenData = {};
+    seen: SeenData;
 
     @ManyToOne(
         () => GroupChat,
