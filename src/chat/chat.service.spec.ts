@@ -24,7 +24,7 @@ describe('ChatService', () => {
     });
 
     it('should get no group chats', async () => {
-        const groupChat = await chatService.getGroupChats("1");
+        const groupChat = await chatService.getChats("1");
         expect(groupChat).toMatchObject([]);
     });
 
@@ -38,7 +38,7 @@ describe('ChatService', () => {
 
         it('should create a private group chat', async () => {
             const creator = profiles[0];
-            const groupChat = await chatService.createGroupChat(creator, []);
+            const groupChat = await chatService.createChat(creator, []);
             expect(groupChat).toBeDefined();
             expect(groupChat.isPrivate).toBeTruthy();
 
@@ -54,7 +54,7 @@ describe('ChatService', () => {
             let groupChat: GroupChat;
             beforeAll(async () => {
                 const creator = profiles[0];
-                groupChat = await chatService.createGroupChat(creator, profiles.slice(1, 3));
+                groupChat = await chatService.createChat(creator, profiles.slice(1, 3));
                 expect(groupChat).toBeDefined();
                 expect(groupChat.isPrivate).toBeFalsy();
             });
