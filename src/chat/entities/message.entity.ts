@@ -1,6 +1,6 @@
 import { GenericEntity } from "@/generics/entity";
 import { Profile } from "@/profile/entities/profile.entity";
-import { AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
+import { AfterInsert, AfterLoad, AfterRecover, AfterUpdate, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
 import { GroupChat } from "./group-chat.entity";
 
 export type MessageData = {
@@ -15,14 +15,12 @@ export type SeenData = {
 @Entity()
 export class Message extends GenericEntity {
     @Column({
-        type: "json",
-        default: JSON.stringify({}),
+        type: "longtext",
     })
     data: MessageData;
 
     @Column({
-        type: "json",
-        default: JSON.stringify({}),
+        type: "longtext",
     })
     seen: SeenData;
 
@@ -49,7 +47,10 @@ export class Message extends GenericEntity {
         }
     }
 
+    @AfterRecover()
     @AfterLoad()
+    @AfterInsert()
+    @AfterUpdate()
     fromJson() {
         if (this.seen && typeof this.seen === "string") {
             this.seen = JSON.parse(this.seen) as SeenData;

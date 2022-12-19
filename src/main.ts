@@ -14,6 +14,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
 
+  // CORS configuration
+  app.enableCors({
+    origin: "*",
+  });
+
   // Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({

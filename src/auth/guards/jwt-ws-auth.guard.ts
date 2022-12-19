@@ -15,17 +15,22 @@ export class WsGuard implements CanActivate {
         context: ExecutionContext,
     ): Promise<boolean> {
         try {
-
             const client: Socket = context.switchToWs().getClient<Socket>();
-            const bearerToken = client.handshake.headers.authorization?.split(' ')[1];
-            if (!bearerToken) {
-                throw new WsException('Unauthorized');
-            }
+            const { headers, query } = client.handshake;
+            const bearerToken = (
+                headers.authorization ||
+                query.authorization as string
+            )?.split(' ')[1];
+
+            if (!bearerToken)
+                throw new WsException('Unauthorized, make sure to include the token in the Authorization header');
+
             const decoded = jwt.verify(bearerToken, process.env.JWT_SECRET) as Payload;
             const user = await this.userService.findOne(decoded.id);
-            if (!user) {
+
+            if (!user)
                 throw new WsException('User not found');
-            }
+
             context.switchToHttp().getRequest().user = user;
             return Boolean(user);
         } catch (err) {
