@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, UseGuards, ForbiddenException, Query } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
@@ -10,25 +10,19 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) { }
 
   @Get()
-  findAll() {
-    return this.profileService.findAll();
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') take = 10,
+  ) {
+    return this.profileService.findAll({
+      page,
+      take
+    });
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.profileService.findOne(id);
-  }
-
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard)
-  update(
-    @GetUser() user: User,
-    @Param('id') id: string,
-    @Body() updateProfileDto: UpdateProfileDto
-  ) {
-    if (user.profile.id !== id) throw new ForbiddenException("You can't update other user's profile");
-    return this.profileService.update(id, updateProfileDto);
   }
 
   @Patch()
