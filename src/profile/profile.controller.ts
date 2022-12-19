@@ -14,13 +14,10 @@ export class ProfileController {
   findAll(
     @Query('page') page = 1,
     @Query('limit') take = 10,
-    @Query('query') query?: string,
-    @GetUser() user?: User,
   ) {
-    return this.profileService.query(user?.profile?.id || '', {
+    return this.profileService.findAll({
       page,
-      take,
-      query,
+      take
     });
   }
 

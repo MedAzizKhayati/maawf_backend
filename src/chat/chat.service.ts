@@ -1,17 +1,16 @@
 import { GenericsService } from '@/generics/service';
 import { Profile } from '@/profile/entities/profile.entity';
 import addPaginationToOptions from '@/utils/addPaginationToOptions';
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Server } from 'socket.io';
 import { Not, Repository } from 'typeorm';
-import { CreateGroupChatDTO } from './dto/create-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { GroupChatToProfile } from './entities/group-chat-to-profile.entity';
 import { GroupChat } from './entities/group-chat.entity';
-import { Attachment, Message } from './entities/message.entity';
+import { Message } from './entities/message.entity';
 
 @Injectable()
 export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat> {
@@ -44,30 +43,28 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         return groupChat;
     }
 
-    async createChat(creator: Profile, createChatDto: CreateGroupChatDTO): Promise<GroupChat> {
-        const members = [
-            ...createChatDto.members.map(member => this.profileRepository.create({ id: member.id })),
-            creator
-        ].filter(
-            (member, index, self) => self.findIndex(m => m.id === member.id) === index
+    async createChat(creator: Profile, members: Profile[] | string[]): Promise<GroupChat> {
+        members = members.map(
+            (member: Profile | string) =>
+                typeof member === 'string' ?
+                    this.profileRepository.create({ id: member }) :
+                    member
         );
+
+        members = [...members, creator]
+            .filter(
+                (member, index, self) => self.findIndex(m => m.id === member.id) === index
+            );
 
         const groupChatToProfiles = members.map(member => {
             const groupChatToProfile = new GroupChatToProfile();
-            if (member.id === creator.id) {
-                groupChatToProfile.isAdmin = true
-                groupChatToProfile.encryptedSymmetricKey = createChatDto.encryptedSymmetricKey;
-            } else {
-                const memberDto = createChatDto.members.find(memberDto => memberDto.id === member.id);
-                groupChatToProfile.encryptedSymmetricKey = memberDto.encryptedSymmetricKey;
-            }
+            if (member.id === creator.id) groupChatToProfile.isAdmin = true;
             groupChatToProfile.profile = member;
             return groupChatToProfile;
         });
 
         const groupChat = new GroupChat();
         groupChat.groupChatToProfiles = groupChatToProfiles;
-        groupChat.name = createChatDto.name;
         if (members.length <= 2) groupChat.isPrivate = true;
 
         const gc = await this.groupChatRepository.save(groupChat);
@@ -103,7 +100,10 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
     async updateGroupChat(updateDTO: UpdateGroupChatDTO): Promise<GroupChat> {
         const groupChat = await this.findOne(updateDTO.id);
         const members = updateDTO.newMembers.map(
-            member => this.profileRepository.create({ id: member.id })
+            (member: Profile | string) =>
+                typeof member === 'string' ?
+                    this.profileRepository.create({ id: member }) :
+                    member
         );
 
         const groupChatToProfiles = [
@@ -111,10 +111,6 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             ...members.map(member => {
                 const groupChatToProfile = new GroupChatToProfile();
                 groupChatToProfile.profile = member;
-                groupChatToProfile.encryptedSymmetricKey =
-                    updateDTO.newMembers
-                        .find(memberDto => memberDto.id === member.id)
-                        .encryptedSymmetricKey;
                 return groupChatToProfile;
             })
         ].filter(m => !updateDTO.removeMembers.includes(m.profile.id));
@@ -165,40 +161,17 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         });
     }
 
-    getAttachments(files: Express.Multer.File[]): Attachment[] {
-        return files.map(file => {
-            return {
-                url: file.path.replace('public', '').split('\\').join('/'),
-                type: file.mimetype
-            };
-        });
-    }
-
-
-    async sendMessage(message: SendMessageDto, sender: string | Profile, files: Express.Multer.File[] = []): Promise<Message> {
+    async sendMessage(message: SendMessageDto, sender: string | Profile): Promise<Message> {
         sender = typeof sender === 'string' ? this.profileRepository.create({ id: sender }) : sender;
-
-        if (!message.text && !files.length)
-            throw new BadRequestException('Message is empty');
-
-        const groupChat = await this.groupChatRepository.findOneBy({ id: message.groupChatId });
-
-        if (!groupChat)
-            throw new NotFoundException('Group chat not found');
-        if (!await this.isUserInGroupChat(groupChat, sender))
-            throw new ForbiddenException('You are not in this group chat');
-
+        const groupChat = this.groupChatRepository.create({ id: message.groupChatId });
         const messageEntity = new Message();
         messageEntity.groupChat = groupChat;
         messageEntity.profile = sender;
-        messageEntity.isEncrypted = !!message.isEncrypted;
         messageEntity.seen = { [sender.id]: true };
         messageEntity.data = {
             text: message.text,
-            attachments: this.getAttachments(files)
+            attachments: message.attachments
         };
-        if (!message.text)
-            delete messageEntity.data.text;
 
         const [messageResult, concernedProfiles] = await Promise.all([
             this.messageRepository.save(messageEntity),
@@ -222,9 +195,6 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             }) :
             message;
         profile = typeof profile === 'string' ? profile : profile.id;
-        if (!await this.isUserInGroupChat(message.groupChat, profile)) {
-            throw new ForbiddenException('You are not in this group chat');
-        }
         message.seen[profile] = true;
         await this.messageRepository.save(message);
         const savedMessage = await this.messageRepository.findOne({

@@ -1,5 +1,4 @@
 import { IsDefined, IsNotEmpty, IsOptional } from "class-validator";
-import { Member } from "./create-chat.dto";
 
 export class UpdateGroupChatDTO {
     @IsNotEmpty()
@@ -11,7 +10,7 @@ export class UpdateGroupChatDTO {
     name?: string;
 
     @IsOptional()
-    newMembers?: Member[] = [];
+    newMembers?: string[] = [];
 
     @IsOptional()
     removeMembers?: string[] = [];

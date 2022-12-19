@@ -3,14 +3,9 @@ import { Profile } from "@/profile/entities/profile.entity";
 import { AfterInsert, AfterLoad, AfterRecover, AfterUpdate, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
 import { GroupChat } from "./group-chat.entity";
 
-export type Attachment = {
-    type: string;
-    url: string;
-}
-
 export type MessageData = {
     text?: string;
-    attachments?: Attachment[];
+    attachments?: string[];
 }
 
 export type SeenData = {
@@ -28,11 +23,6 @@ export class Message extends GenericEntity {
         type: "longtext",
     })
     seen: SeenData;
-
-    @Column({
-        default: false,
-    })
-    isEncrypted: boolean;
 
     @ManyToOne(
         () => GroupChat,

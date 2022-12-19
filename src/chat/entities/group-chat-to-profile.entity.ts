@@ -20,11 +20,6 @@ export class GroupChatToProfile extends GenericEntity {
     })
     public isMuted: boolean
 
-    @Column({
-        length: 1024
-    })
-    public encryptedSymmetricKey: string
-
     @ManyToOne(
         () => Profile,
         (profile) => profile.groupChatToProfiles,

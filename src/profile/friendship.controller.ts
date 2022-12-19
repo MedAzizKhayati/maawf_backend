@@ -4,7 +4,6 @@ import { GetUser } from '@/auth/decorators/user.decorator';
 import { User } from '@/auth/entities/user.entity';
 import { FriendshipSerivce } from './friendship.service';
 import { Friendship } from './entities/friendship.entity';
-import { AcceptFriendRequestDTO } from './dto/accept-friend-request.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('friendships')
@@ -18,9 +17,8 @@ export class FrienshipController {
         @Query('limit') take = 10,
         @Query('status') status: Friendship['status'] = 'accepted',
         @Query('type') type: "all" | "incoming" | "outgoing",
-        @Query('query') query?: string,
     ) {
-        return this.friendshipService.findAll(user.profile, { page, take, status, type, query });
+        return this.friendshipService.findAll(user.profile, { page, take, status, type });
     }
 
     @Post(':id')
@@ -35,9 +33,8 @@ export class FrienshipController {
     async acceptFriendRequest(
         @Param('id') id: string,
         @GetUser() user: User,
-        @Body() acceptFriendRequestDTO: AcceptFriendRequestDTO,
     ) {
-        return this.friendshipService.acceptFriendRequest(id, user.profile, acceptFriendRequestDTO);
+        return this.friendshipService.acceptFriendRequest(id, user.profile);
     }
 
     @Patch('reject/:id')

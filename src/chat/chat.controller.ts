@@ -3,22 +3,17 @@
 import { GetUser } from '@/auth/decorators/user.decorator';
 import { User } from '@/auth/entities/user.entity';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { Body, Controller, Get, Param, Patch, Post, Query, Request, UnauthorizedException, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import uniqueFileName from '@/utils/uniqueFileName';
-import { ApiConsumes } from '@nestjs/swagger';
-import { CreateGroupChatDTO } from './dto/create-chat.dto';
+
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
     constructor(private readonly chatService: ChatService) { }
 
-    @Get()
+    @Get('rooms')
     findAll(
         @GetUser() user: User,
         @Query('page') page = 1,
@@ -27,34 +22,35 @@ export class ChatController {
         return this.chatService.findChatsByProfile(user.profile, page, take);
     }
 
-    @Post()
-    createGroupChat(
-        @GetUser() user: User,
-        @Body() dto: CreateGroupChatDTO
+    @Get('room/:roomId')
+    findOne(
+        @Param('roomId') roomId: string,
     ) {
-        return this.chatService.createChat(user.profile, dto);
+        return this.chatService.findOne(roomId);
     }
 
-    @Get('messages/:id')
+    @Post('room')
+    createGroupChat(
+        @GetUser() user: User,
+        @Body() members: string[]
+    ) {
+        return this.chatService.createChat(user.profile, members);
+    }
+
+    @Get('messages/:roomId')
     async getMessages(
         @Query('page') page = 1,
         @Query('limit') take = 10,
-        @Param('id') id: string,
+        @Param('roomId') roomId: string,
         @GetUser() user: User
     ) {
-        const isUserInGroupChat = await this.chatService.isUserInGroupChat(id, user.profile.id);
+        const isUserInGroupChat = await this.chatService.isUserInGroupChat(roomId, user.profile.id);
         if (!isUserInGroupChat) throw new UnauthorizedException();
-        return this.chatService.getMessages(id, page, take);
+        return this.chatService.getMessages(roomId, page, take);
     }
 
-    @Get(':id')
-    findOne(
-        @Param('id') id: string,
-    ) {
-        return this.chatService.findOne(id);
-    }
 
-    @Patch(':id')
+    @Patch('room/:roomId')
     async updateGroupChat(
         @GetUser() user: User,
         @Body() updateGroupChatDTO: UpdateGroupChatDTO,
@@ -63,8 +59,6 @@ export class ChatController {
         if (!isUserInGroupChat) throw new UnauthorizedException();
         return this.chatService.updateGroupChat(updateGroupChatDTO);
     }
-
-   
 
     @Patch('members/:chatId')
     async updateMember(
@@ -77,22 +71,4 @@ export class ChatController {
         return this.chatService.updateMember(chatId, updateMemberDto);
     }
 
-    @Post('send-message')
-    @ApiConsumes('multipart/form-data')
-    @UseInterceptors(FilesInterceptor('files', 24, {
-        storage: diskStorage({
-            destination: './public/uploads/chat',
-            filename: uniqueFileName
-        }),
-        limits: {
-            fileSize: 12_000_000, // 12MB
-        }
-    }))
-    async sendMessage(
-        @GetUser() user: User,
-        @Body() sendMessageDto: SendMessageDto,
-        @UploadedFiles() files: Express.Multer.File[]
-    ) {
-        return this.chatService.sendMessage(sendMessageDto, user.profile, files);
-    }
 }
