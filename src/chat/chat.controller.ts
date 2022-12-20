@@ -76,7 +76,7 @@ export class ChatController {
     }
 
     @Post('send-message')
-    @UseInterceptors(FilesInterceptor('files', 12, {
+    @UseInterceptors(FilesInterceptor('files', 24, {
         storage: diskStorage({
             destination: './public/uploads/chat',
             filename: uniqueFileName
