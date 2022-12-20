@@ -1,7 +1,6 @@
 import { IsEnum, IsOptional, Matches, MaxLength, MinLength } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender } from "../enums/gender.enum";
-import { Profile } from "../entities/profile.entity";
 
 
 export class CreateProfileDto {

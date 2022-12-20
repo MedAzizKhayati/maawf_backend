@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProfileModule } from './profile/profile.module';
 import { ChatModule } from './chat/chat.module';
+import { PostModule } from './post/post.module';
 @Module({
   imports: [
     AuthModule,
@@ -23,7 +24,8 @@ import { ChatModule } from './chat/chat.module';
       synchronize: true,
     }),
     ProfileModule,
-    ChatModule
+    ChatModule,
+    PostModule
   ],
   controllers: [AppController],
   providers: [AppService],
