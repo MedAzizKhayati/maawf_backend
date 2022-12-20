@@ -104,21 +104,21 @@ export class FriendshipSerivce {
         return friendship;
     }
 
-    async sendFriendRequest(sender: Profile | string, receiver: Profile | string) {
-        sender = typeof sender === 'string' ? await this.profileService.findOne(sender) : sender;
-        receiver = typeof receiver === 'string' ? await this.profileService.findOne(receiver) : receiver;
+    async sendFriendRequest(from: Profile | string, to: Profile | string) {
+        from = typeof from === 'string' ? await this.profileService.findOne(from) : from;
+        to = typeof to === 'string' ? await this.profileService.findOne(to) : to;
 
-        if (!sender)
+        if (!from)
             throw new NotFoundException('Sender not found');
 
-        if (!receiver)
+        if (!to)
             throw new NotFoundException('Receiver not found');
 
-        if (sender.id === receiver.id)
+        if (from.id === to.id)
             throw new UnauthorizedException('You cannot send a friend request to yourself');
 
 
-        const existingFriendship = await this.findFriendship(sender, receiver);
+        const existingFriendship = await this.findFriendship(from, to);
 
         if (existingFriendship) {
             switch (existingFriendship.status) {
@@ -138,8 +138,8 @@ export class FriendshipSerivce {
         }
 
         const friendship = this.frienshipRepository.create({
-            sender,
-            receiver,
+            sender: from,
+            receiver: to,
             status: 'pending'
         });
 
