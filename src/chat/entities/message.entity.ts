@@ -3,9 +3,14 @@ import { Profile } from "@/profile/entities/profile.entity";
 import { AfterInsert, AfterLoad, AfterRecover, AfterUpdate, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
 import { GroupChat } from "./group-chat.entity";
 
+export type Attachment = {
+    type: string;
+    url: string;
+}
+
 export type MessageData = {
     text?: string;
-    attachments?: string[];
+    attachments?: Attachment[];
 }
 
 export type SeenData = {

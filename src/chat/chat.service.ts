@@ -1,7 +1,7 @@
 import { GenericsService } from '@/generics/service';
 import { Profile } from '@/profile/entities/profile.entity';
 import addPaginationToOptions from '@/utils/addPaginationToOptions';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Server } from 'socket.io';
 import { Not, Repository } from 'typeorm';
@@ -10,7 +10,7 @@ import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { GroupChatToProfile } from './entities/group-chat-to-profile.entity';
 import { GroupChat } from './entities/group-chat.entity';
-import { Message } from './entities/message.entity';
+import { Attachment, Message } from './entities/message.entity';
 
 @Injectable()
 export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat> {
@@ -161,17 +161,39 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         });
     }
 
-    async sendMessage(message: SendMessageDto, sender: string | Profile): Promise<Message> {
+    getAttachments(files: Express.Multer.File[]): Attachment[] {
+        return files.map(file => {
+            return {
+                url: file.path.replace('public', '').split('\\').join('/'),
+                type: file.mimetype
+            };
+        });
+    }
+
+
+    async sendMessage(message: SendMessageDto, sender: string | Profile, files: Express.Multer.File[] = []): Promise<Message> {
         sender = typeof sender === 'string' ? this.profileRepository.create({ id: sender }) : sender;
-        const groupChat = this.groupChatRepository.create({ id: message.groupChatId });
+
+        if (!message.text && !files.length)
+            throw new BadRequestException('Message is empty');
+
+        const groupChat = await this.groupChatRepository.findOneBy({ id: message.groupChatId });
+
+        if (!groupChat)
+            throw new NotFoundException('Group chat not found');
+        if (!await this.isUserInGroupChat(groupChat, sender))
+            throw new ForbiddenException('You are not in this group chat');
+
         const messageEntity = new Message();
         messageEntity.groupChat = groupChat;
         messageEntity.profile = sender;
         messageEntity.seen = { [sender.id]: true };
         messageEntity.data = {
             text: message.text,
-            attachments: message.attachments
+            attachments: this.getAttachments(files)
         };
+        if(!message.text)
+            delete messageEntity.data.text;
 
         const [messageResult, concernedProfiles] = await Promise.all([
             this.messageRepository.save(messageEntity),
