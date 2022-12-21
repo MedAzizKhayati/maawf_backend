@@ -192,7 +192,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             text: message.text,
             attachments: this.getAttachments(files)
         };
-        if(!message.text)
+        if (!message.text)
             delete messageEntity.data.text;
 
         const [messageResult, concernedProfiles] = await Promise.all([
@@ -217,6 +217,9 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             }) :
             message;
         profile = typeof profile === 'string' ? profile : profile.id;
+        if (!await this.isUserInGroupChat(message.groupChat, profile)) {
+            throw new ForbiddenException('You are not in this group chat');
+        }
         message.seen[profile] = true;
         await this.messageRepository.save(message);
         const savedMessage = await this.messageRepository.findOne({
