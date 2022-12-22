@@ -2,7 +2,8 @@ import { ChatService } from '@/chat/chat.service';
 import addPaginationToOptions from '@/utils/addPaginationToOptions';
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
+import { AcceptFriendRequestDTO } from './dto/accept-friend-request.dto';
 import { Friendship } from './entities/friendship.entity';
 import { Profile } from './entities/profile.entity';
 import { ProfileService } from './profile.service';
@@ -22,21 +23,34 @@ export class FriendshipSerivce {
             page?: number,
             take?: number,
             status?: Friendship['status'],
-            type?: "all" | "incoming" | "outgoing"
+            type?: "all" | "incoming" | "outgoing",
+            query?: string
         }) {
         profile = typeof profile === 'string' ? profile : profile.id;
+        const searchByName: any = options?.query &&
+            [
+                {
+                    firstName: Like(`%${options?.query}%`),
+                },
+                {
+                    lastName: Like(`%${options?.query}%`),
+                }
+            ];
         return this.frienshipRepository.find(addPaginationToOptions<Friendship>({
             where: [
                 options.type !== "incoming" && {
                     sender: { id: profile },
-                    status: options?.status || 'accepted'
+                    status: options?.status || 'accepted',
+                    receiver: searchByName
                 },
                 options.type !== "outgoing" && {
                     receiver: { id: profile },
-                    status: options?.status || 'accepted'
+                    status: options?.status || 'accepted',
+                    sender: searchByName
                 }
             ]
         }, options.page, options.take));
+
     }
 
     async preparePendingFriendship(sender: Profile | string, receiver: Profile | string): Promise<[Friendship, Profile, Profile]> {
@@ -86,7 +100,7 @@ export class FriendshipSerivce {
         return await this.frienshipRepository.save(friendship);
     }
 
-    async acceptFriendRequest(sender: Profile | string, receiver: Profile | string) {
+    async acceptFriendRequest(sender: Profile | string, receiver: Profile | string, acceptFriendRequestDTO: AcceptFriendRequestDTO) {
         let friendship: Friendship;
         [friendship, sender, receiver] = await this.preparePendingFriendship(sender, receiver);
 
@@ -99,7 +113,10 @@ export class FriendshipSerivce {
         const existingChat = await this.chatService.findChat([sender, receiver], true);
 
         if (!existingChat)
-            await this.chatService.createChat(sender, [receiver]);
+            await this.chatService.createChat(sender, {
+                encryptedSymmetricKey: acceptFriendRequestDTO.senderEncryptedSymmetricKey,
+                members: [{ id: receiver.id, encryptedSymmetricKey: acceptFriendRequestDTO.receiverEncryptedSymmetricKey }]
+            });
 
         return friendship;
     }

@@ -29,6 +29,11 @@ export class Message extends GenericEntity {
     })
     seen: SeenData;
 
+    @Column({
+        default: false,
+    })
+    isEncrypted: boolean;
+
     @ManyToOne(
         () => GroupChat,
         (groupChat) => groupChat.messages,

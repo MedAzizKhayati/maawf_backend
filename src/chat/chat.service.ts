@@ -5,6 +5,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Server } from 'socket.io';
 import { Not, Repository } from 'typeorm';
+import { CreateGroupChatDTO } from './dto/create-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
@@ -43,28 +44,30 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         return groupChat;
     }
 
-    async createChat(creator: Profile, members: Profile[] | string[]): Promise<GroupChat> {
-        members = members.map(
-            (member: Profile | string) =>
-                typeof member === 'string' ?
-                    this.profileRepository.create({ id: member }) :
-                    member
+    async createChat(creator: Profile, createChatDto: CreateGroupChatDTO): Promise<GroupChat> {
+        const members = [
+            ...createChatDto.members.map(member => this.profileRepository.create({ id: member.id })),
+            creator
+        ].filter(
+            (member, index, self) => self.findIndex(m => m.id === member.id) === index
         );
-
-        members = [...members, creator]
-            .filter(
-                (member, index, self) => self.findIndex(m => m.id === member.id) === index
-            );
 
         const groupChatToProfiles = members.map(member => {
             const groupChatToProfile = new GroupChatToProfile();
-            if (member.id === creator.id) groupChatToProfile.isAdmin = true;
+            if (member.id === creator.id) {
+                groupChatToProfile.isAdmin = true
+                groupChatToProfile.encryptedSymmetricKey = createChatDto.encryptedSymmetricKey;
+            } else {
+                const memberDto = createChatDto.members.find(memberDto => memberDto.id === member.id);
+                groupChatToProfile.encryptedSymmetricKey = memberDto.encryptedSymmetricKey;
+            }
             groupChatToProfile.profile = member;
             return groupChatToProfile;
         });
 
         const groupChat = new GroupChat();
         groupChat.groupChatToProfiles = groupChatToProfiles;
+        groupChat.name = createChatDto.name;
         if (members.length <= 2) groupChat.isPrivate = true;
 
         const gc = await this.groupChatRepository.save(groupChat);
@@ -100,10 +103,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
     async updateGroupChat(updateDTO: UpdateGroupChatDTO): Promise<GroupChat> {
         const groupChat = await this.findOne(updateDTO.id);
         const members = updateDTO.newMembers.map(
-            (member: Profile | string) =>
-                typeof member === 'string' ?
-                    this.profileRepository.create({ id: member }) :
-                    member
+            member => this.profileRepository.create({ id: member.id })
         );
 
         const groupChatToProfiles = [
@@ -111,6 +111,10 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             ...members.map(member => {
                 const groupChatToProfile = new GroupChatToProfile();
                 groupChatToProfile.profile = member;
+                groupChatToProfile.encryptedSymmetricKey =
+                    updateDTO.newMembers
+                        .find(memberDto => memberDto.id === member.id)
+                        .encryptedSymmetricKey;
                 return groupChatToProfile;
             })
         ].filter(m => !updateDTO.removeMembers.includes(m.profile.id));
@@ -187,6 +191,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         const messageEntity = new Message();
         messageEntity.groupChat = groupChat;
         messageEntity.profile = sender;
+        messageEntity.isEncrypted = !!message.isEncrypted;
         messageEntity.seen = { [sender.id]: true };
         messageEntity.data = {
             text: message.text,

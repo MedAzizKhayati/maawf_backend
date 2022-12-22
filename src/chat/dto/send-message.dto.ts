@@ -13,4 +13,7 @@ export class SendMessageDto {
     groupChatId: string;
 
     attachments?: string[] = [];
+
+    @IsOptional()
+    isEncrypted?: boolean = false;
 }
