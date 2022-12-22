@@ -9,14 +9,18 @@ import { User } from '@/auth/entities/user.entity';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(
     @Query('page') page = 1,
     @Query('limit') take = 10,
+    @Query('query') query?: string,
+    @GetUser() user?: User,
   ) {
-    return this.profileService.findAll({
+    return this.profileService.query(user?.profile?.id || '', {
       page,
-      take
+      take,
+      query,
     });
   }
 

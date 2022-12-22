@@ -41,6 +41,11 @@ export class Profile extends GenericEntity {
     })
     cover: string;
 
+    @Column({
+        type: 'longtext'
+    })
+    publicKey: string;
+
     @OneToMany(() => GroupChatToProfile, groupChatToProfile => groupChatToProfile.profile)
     public groupChatToProfiles: GroupChatToProfile[];
 
