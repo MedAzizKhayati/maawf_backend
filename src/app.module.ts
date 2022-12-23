@@ -7,7 +7,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ProfileModule } from './profile/profile.module';
 import { ChatModule } from './chat/chat.module';
 import { PostModule } from './post/post.module';
-import { ServeStaticModule } from '@nestjs/serve-static/dist/serve-static.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -23,7 +24,7 @@ import { ServeStaticModule } from '@nestjs/serve-static/dist/serve-static.module
       ],
       synchronize: true,
     }),
-    ServeStaticModule.forRoot({ isGlobal: true,
+    ServeStaticModule.forRoot({ 
       rootPath: join(__dirname, '..', 'public'),
     }),
     AuthModule,
