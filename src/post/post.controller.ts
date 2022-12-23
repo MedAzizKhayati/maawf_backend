@@ -6,10 +6,12 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { GetUser } from '@/auth/decorators/user.decorator';
 import { User } from '@/auth/entities/user.entity';
 import { CreateReactDto } from './dto/react.dto';
+import { ReactService } from './react.service';
 
 @Controller('post')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(private readonly postService: PostService ,
+    private readonly reactService: ReactService) {}
 
   @Get()
   findAll(@Query('page') page = 1, @Query('limit') take = 10) {
@@ -43,10 +45,12 @@ export class PostController {
     return this.postService.delete(id);
   }
 
-  @Post(':id')
+  @Post('react')
   @UseGuards(JwtAuthGuard)
-  ReactToPost(@GetUser() user: User,@Body() reactDto:CreateReactDto)  {
-  
+  ReactToPost(@GetUser() user: User,@Body() createReactDto:CreateReactDto,)  {
+    createReactDto.profile = user.profile;
+    
+    return this.reactService.create(createReactDto);
   }
 
 }
