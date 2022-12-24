@@ -1,7 +1,8 @@
+import { User } from "@/auth/entities/user.entity";
 import { GenericEntity } from "@/generics/entity";
 import { Profile } from "@/profile/entities/profile.entity";
-import { AfterInsert, AfterLoad, AfterRecover, AfterUpdate, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
-import { GroupChat } from "./group-chat.entity";
+import { AfterInsert, AfterLoad, AfterRecover, AfterUpdate, BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { GroupChat } from "./chat.entity";
 
 export type Attachment = {
     type: string;

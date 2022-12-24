@@ -3,7 +3,7 @@ import { Profile } from '@/profile/entities/profile.entity';
 import { ProfileService } from '@/profile/profile.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatService } from './chat.service';
-import { GroupChat } from './entities/group-chat.entity';
+import { GroupChat } from './entities/chat.entity';
 
 describe('ChatService', () => {
     let chatService: ChatService;
@@ -38,7 +38,10 @@ describe('ChatService', () => {
 
         it('should create a private group chat', async () => {
             const creator = profiles[0];
-            const groupChat = await chatService.createChat(creator, []);
+            const groupChat = await chatService.createChat(creator, {
+                encryptedSymmetricKey: 'encryptedSymmetricKey',
+                members: []
+            });
             expect(groupChat).toBeDefined();
             expect(groupChat.isPrivate).toBeTruthy();
 
@@ -54,7 +57,14 @@ describe('ChatService', () => {
             let groupChat: GroupChat;
             beforeAll(async () => {
                 const creator = profiles[0];
-                groupChat = await chatService.createChat(creator, profiles.slice(1, 3));
+                groupChat = await chatService.createChat(creator, {
+                    encryptedSymmetricKey: 'encryptedSymmetricKey',
+                    name: 'test group chat',
+                    members: profiles.slice(1, 3).map(profile => ({
+                        encryptedSymmetricKey: 'encryptedSymmetricKey',
+                        id: profile.id
+                    }))
+                });
                 expect(groupChat).toBeDefined();
                 expect(groupChat.isPrivate).toBeFalsy();
             });
@@ -88,7 +98,10 @@ describe('ChatService', () => {
                 groupChat = await chatService.updateGroupChat({
                     id: groupChat.id,
                     name,
-                    newMembers: [profiles[1].id],
+                    newMembers: [{
+                        encryptedSymmetricKey: 'encryptedSymmetricKey',
+                        id: profiles[1].id,
+                    }],
                     removeMembers: [profiles[2].id, profiles[3].id],
                 })
                 expect(groupChat.name).toBe(name);
@@ -96,7 +109,7 @@ describe('ChatService', () => {
             })
 
             it('should allow a member to send a message', async () => {
-                const member = profiles[2];
+                const member = profiles[1];
                 const message = await chatService.sendMessage(
                     {
                         groupChatId: groupChat.id,
