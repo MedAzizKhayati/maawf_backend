@@ -1,31 +1,38 @@
+import { User } from '@/auth/entities/user.entity';
 import { GenericEntity } from '@/generics/entity';
-import { Entity, Column, OneToMany } from 'typeorm';
-import { GroupChatToProfile } from './group-chat-to-profile.entity';
+import { Profile } from '@/profile/entities/profile.entity';
+import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import { GroupChatToProfile } from './chat-to-profile.entity';
 import { Message } from './message.entity';
 
 @Entity()
 export class GroupChat extends GenericEntity {
-    @Column({
-        nullable: true
-    })
+    @Column()
     name: string;
 
-    @Column({
-        nullable: true
-    })
+    @Column()
     picture: string;
 
-    @Column({
-        default: false
-    })
+    @Column()
     isPrivate: boolean;
+
+    @OneToOne(
+        () => Message,
+        {
+            eager: true,
+            cascade: true,
+            onDelete: 'SET NULL',
+        }
+    )
+    @JoinColumn()
+    lastMessage: Message;
 
     @OneToMany(
         () => GroupChatToProfile,
         groupChatToProfile => groupChatToProfile.groupChat,
         {
             eager: true,
-            cascade: true,
+            cascade: true
         }
     )
     public groupChatToProfiles: GroupChatToProfile[];

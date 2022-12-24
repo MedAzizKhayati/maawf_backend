@@ -3,14 +3,15 @@ import { Profile } from '@/profile/entities/profile.entity';
 import addPaginationToOptions from '@/utils/addPaginationToOptions';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { unlink, unlinkSync } from 'fs';
 import { Server } from 'socket.io';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateGroupChatDTO } from './dto/create-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
-import { GroupChatToProfile } from './entities/group-chat-to-profile.entity';
-import { GroupChat } from './entities/group-chat.entity';
+import { GroupChatToProfile } from './entities/chat-to-profile.entity';
+import { GroupChat } from './entities/chat.entity';
 import { Attachment, Message } from './entities/message.entity';
 
 @Injectable()
@@ -127,7 +128,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
     }
 
     async isUserInGroupChat(groupChat: GroupChat | string, profile: Profile | string): Promise<boolean> {
-        const groupChatId = typeof groupChat === 'string' ? groupChat : groupChat.id;
+        const groupChatId = typeof groupChat === 'string' ? groupChat : groupChat?.id;
         const profileId = typeof profile === 'string' ? profile : profile.id;
         return this.groupChatToProfileRepo.findAndCount({
             where: {
@@ -205,6 +206,10 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             this.getConcernedProfiles(groupChat)
                 .then(profiles => profiles.map(profile => profile.id))
         ]);
+
+        groupChat.lastMessage = { id: messageResult.id } as Message;
+        await this.groupChatRepository.save(groupChat);
+
         if (this.server)
             this.server.to(concernedProfiles).emit('message', {
                 groupChatId: message.groupChatId,
@@ -285,17 +290,14 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             .where('gc.id = :id', { id })
             .leftJoinAndSelect('gc.groupChatToProfiles', 'gctps')
             .leftJoinAndSelect('gctps.profile', 'profiles')
-            .leftJoinAndMapOne('gc.lastMessage', Message, 'messages', 'messages.groupChatId = gc.id')
+            .leftJoinAndSelect('gc.lastMessage', 'messages')
             .leftJoinAndSelect('messages.profile', 'p')
-            .orderBy('messages.createdAt', 'DESC')
             .getOne() as any;
-
-        groupChat?.lastMessage?.fromJson();
 
         return groupChat;
     }
 
-    async findChatsByProfile(profile: Profile | string, page = 1, take = 10): Promise<any> {
+    async getRecentChats(profile: Profile | string, page = 1, take = 10): Promise<any> {
         const id = typeof profile === 'string' ? profile : profile.id;
         const results = await this.groupChatToProfileRepo
             .createQueryBuilder('gctp')
@@ -303,28 +305,14 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             .leftJoinAndSelect('gctp.groupChat', 'gc')
             .leftJoinAndSelect('gc.groupChatToProfiles', 'gctps')
             .leftJoinAndSelect('gctps.profile', 'profiles')
-            .leftJoinAndMapOne(
-                'gc.lastMessage',
-                Message,
-                'messages',
-                `messages.groupChatId = gc.id and 
-                 messages.createdAt = (
-                    select max(messages.createdAt) from message messages where messages.groupChatId = gc.id
-                )`
-            )
+            .leftJoinAndSelect('gc.lastMessage', 'messages')
             .leftJoinAndSelect('messages.profile', 'p')
-            .orderBy('messages.createdAt', 'DESC')
+            .orderBy('gc.lastMessage', 'DESC')
             .skip((page - 1) * take)
             .take(take)
             .getMany();
 
-        const groupChats = results.map(res => {
-            const groupChat = res.groupChat as any;
-            groupChat?.lastMessage?.fromJson();
-            return groupChat;
-        });
-
-        return groupChats;
+        return results.map(result => result.groupChat);
     }
 
     async updateMember(
@@ -364,5 +352,45 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         });
 
         return groupChat;
+    }
+
+    private deleteFiles(files: Attachment[]) {
+        files.forEach(async file => {
+            try {
+                const url = __dirname + '/../../public' + file.url;
+                unlinkSync(url);
+            } catch (e) {
+                console.log(e);
+            }
+        });
+    }
+
+    async deleteContentOfMessage(message: Message | string, profile: Profile | string): Promise<Message> {
+        const id = typeof message === 'string' ? message : message.id;
+        const profileId = typeof profile === 'string' ? profile : profile.id;
+
+        const messageToDelete = await this.messageRepository.findOne({
+            where: { id },
+            relations: ['groupChat', 'profile']
+        });
+
+        if (!messageToDelete)
+            throw new NotFoundException('Message not found');
+
+        if (messageToDelete.profile.id !== profileId)
+            throw new ForbiddenException('You are not allowed to delete this message');
+
+        this.deleteFiles(messageToDelete.data.attachments);
+        messageToDelete.data = {};
+
+        message = await this.messageRepository.save(messageToDelete);
+        const concernedProfiles = await this.getConcernedProfiles(message.groupChat)
+            .then(profiles => profiles.map(profile => profile.id));
+        if (this.server)
+            this.server.to(concernedProfiles).emit('message', {
+                groupChatId: message.groupChat.id,
+                message
+            });
+        return message;
     }
 }

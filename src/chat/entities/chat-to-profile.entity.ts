@@ -1,7 +1,7 @@
 import { GenericEntity } from "@/generics/entity"
 import { Profile } from "@/profile/entities/profile.entity"
 import { Entity, Column, ManyToOne } from "typeorm"
-import { GroupChat } from "./group-chat.entity"
+import { GroupChat } from "./chat.entity"
 
 @Entity()
 export class GroupChatToProfile extends GenericEntity {
