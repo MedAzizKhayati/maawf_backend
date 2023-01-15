@@ -27,30 +27,18 @@ export class FriendshipSerivce {
             query?: string
         }) {
         profile = typeof profile === 'string' ? profile : profile.id;
-        const searchByName: any = options?.query &&
-            [
-                {
-                    firstName: Like(`%${options?.query}%`),
-                },
-                {
-                    lastName: Like(`%${options?.query}%`),
-                }
-            ];
-        return this.frienshipRepository.find(addPaginationToOptions<Friendship>({
-            where: [
-                options.type !== "incoming" && {
-                    sender: { id: profile },
-                    status: options?.status || 'accepted',
-                    receiver: searchByName
-                },
-                options.type !== "outgoing" && {
-                    receiver: { id: profile },
-                    status: options?.status || 'accepted',
-                    sender: searchByName
-                }
-            ]
-        }, options.page, options.take));
-
+        options.page = options.page || 1;
+        options.take = options.take || 10;
+        
+        return this.frienshipRepository.createQueryBuilder('friendship')
+            .leftJoinAndSelect('friendship.sender', 'sender')
+            .leftJoinAndSelect('friendship.receiver', 'receiver')
+            .where('friendship.status = :status', { status: options?.status || 'accepted' })
+            .andWhere(`((sender.id = :profile AND CONCAT(receiver.firstName, ' ', receiver.lastName) LIKE :query) OR
+            (receiver.id = :profile AND CONCAT(sender.firstName, ' ', sender.lastName) LIKE :query))`, { profile, query: `%${options?.query}%` })
+            .skip((options.page - 1) * options.take)
+            .take(options.take)
+            .getMany();
     }
 
     async preparePendingFriendship(sender: Profile | string, receiver: Profile | string): Promise<[Friendship, Profile, Profile]> {

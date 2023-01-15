@@ -22,19 +22,15 @@ export class ProfileService extends GenericsService<Profile, CreateProfileDto, U
       take?: number,
       query?: string
     }) {
-    profile = typeof profile === 'string' ? profile : profile.id;    
-    return this.repository.find(addPaginationToOptions<Profile>({
-      where: [
-        {
-          id: Not(profile),
-          firstName: options?.query && Like(`%${options?.query}%`),
-        },
-        {
-          id: Not(profile),
-          lastName: options?.query && Like(`M${options?.query}%`),
-        }
-      ]
-    }, options.page, options.take));
+    profile = typeof profile === 'string' ? profile : profile.id;
+    options.page = options.page || 1;
+    options.take = options.take || 10;
+    return this.repository.createQueryBuilder('profile')
+      .where('profile.id != :profile', { profile })
+      .andWhere("CONCAT(profile.firstName, ' ', profile.lastName) LIKE :query", { query: `%${options?.query}%` })
+      .skip((options.page - 1) * options.take)
+      .take(options.take)
+      .getMany();
   }
 
 }

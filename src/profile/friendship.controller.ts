@@ -19,8 +19,9 @@ export class FrienshipController {
         @Query('status') status: Friendship['status'] = 'accepted',
         @Query('type') type: "all" | "incoming" | "outgoing",
         @Query('query') query?: string,
+        @Query('id') id?: string,
     ) {
-        return this.friendshipService.findAll(user.profile, { page, take, status, type, query });
+        return this.friendshipService.findAll(id || user.profile, { page, take, status, type, query });
     }
 
     @Post(':id')
