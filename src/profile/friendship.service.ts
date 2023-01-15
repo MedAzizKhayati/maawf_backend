@@ -1,8 +1,7 @@
 import { ChatService } from '@/chat/chat.service';
-import addPaginationToOptions from '@/utils/addPaginationToOptions';
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AcceptFriendRequestDTO } from './dto/accept-friend-request.dto';
 import { Friendship } from './entities/friendship.entity';
 import { Profile } from './entities/profile.entity';
@@ -34,8 +33,8 @@ export class FriendshipSerivce {
             .leftJoinAndSelect('friendship.sender', 'sender')
             .leftJoinAndSelect('friendship.receiver', 'receiver')
             .where('friendship.status = :status', { status: options?.status || 'accepted' })
-            .andWhere(`((sender.id = :profile AND CONCAT(receiver.firstName, ' ', receiver.lastName) LIKE :query) OR
-            (receiver.id = :profile AND CONCAT(sender.firstName, ' ', sender.lastName) LIKE :query))`, { profile, query: `%${options?.query}%` })
+            .andWhere(`((sender.id = :profile AND CONCAT(receiver.firstName, ' ', receiver.lastName) LIKE :query AND :type in ('all', 'outgoing')) OR
+            (receiver.id = :profile AND CONCAT(sender.firstName, ' ', sender.lastName) LIKE :query AND :type in ('all', 'incoming')))`, { profile, query: `%${options?.query}%` })
             .skip((options.page - 1) * options.take)
             .take(options.take)
             .getMany();
