@@ -9,7 +9,7 @@ import { Profile } from './entities/profile.entity';
 @Injectable()
 export class ProfileService extends GenericsService<Profile, CreateProfileDto, UpdateProfileDto> {
   constructor(
-    @InjectRepository(Profile) private repo: Repository<Profile>
+    @InjectRepository(Profile) repo: Repository<Profile>
   ) {
     super(repo);
   }
