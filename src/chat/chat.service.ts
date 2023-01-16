@@ -279,7 +279,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             }).then(() => this.findOne(groupChatId));
     }
 
-    async findOne(id: string): Promise<GroupChat> {
+    async findOne(id: string, profile?: Profile | string): Promise<GroupChat> {
         const groupChat = await this.groupChatRepository
             .createQueryBuilder('gc')
             .where('gc.id = :id', { id })
@@ -289,9 +289,11 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             .leftJoinAndSelect('messages.profile', 'p')
             .orderBy('messages.createdAt', 'DESC')
             .getOne() as any;
-
+        profile = typeof profile === 'string' ? profile : profile?.id;
+        // check if the profile exists
+        if (profile && !groupChat.groupChatToProfiles.find(gctp => gctp.profile.id === profile))
+            throw new ForbiddenException('You are not in this group chat');
         groupChat?.lastMessage?.fromJson();
-
         return groupChat;
     }
 
@@ -364,5 +366,12 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         });
 
         return groupChat;
+    }
+
+    async deleteGroupChat(groupChat: GroupChat | string): Promise<void> {
+        groupChat = typeof groupChat === 'string' ? await this.groupChatRepository.findOneByOrFail({ id: groupChat }) : groupChat;   
+        if(groupChat.isPrivate)
+            throw new ForbiddenException('You cannot delete a private chat');     
+        await this.groupChatRepository.delete(groupChat.id);
     }
 }

@@ -50,6 +50,7 @@ export class ChatController {
     @Get(':id')
     findOne(
         @Param('id') id: string,
+        @GetUser() user: User
     ) {
         return this.chatService.findOne(id);
     }
@@ -63,8 +64,6 @@ export class ChatController {
         if (!isUserInGroupChat) throw new UnauthorizedException();
         return this.chatService.updateGroupChat(updateGroupChatDTO);
     }
-
-   
 
     @Patch('members/:chatId')
     async updateMember(

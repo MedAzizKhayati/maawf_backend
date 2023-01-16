@@ -1,9 +1,13 @@
-import { Controller, Get, Body, Patch, Param, UseGuards, ForbiddenException, Query } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, UseGuards, ForbiddenException, Query, UseInterceptors, UploadedFiles, UploadedFile } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { GetUser } from '@/auth/decorators/user.decorator';
 import { User } from '@/auth/entities/user.entity';
+import { ApiConsumes } from '@nestjs/swagger';
+import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import uniqueFileName from '@/utils/uniqueFileName';
 
 @Controller('profile')
 export class ProfileController {
@@ -31,11 +35,31 @@ export class ProfileController {
 
   @Patch()
   @UseGuards(JwtAuthGuard)
-  updateMyProfile(
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileFieldsInterceptor([
+    {
+      name: 'avatar', maxCount: 1
+    },
+    {
+      name: 'cover', maxCount: 1
+    }
+  ], {
+    storage: diskStorage({
+      destination: (req, file, cb) => {
+        if (file.fieldname === 'avatar')
+          return cb(null, './public/uploads/profiles/avatar');
+        if (file.fieldname === 'cover')
+          return cb(null, './public/uploads/profiles/cover');
+      },
+      filename: uniqueFileName,
+    }),
+  }))
+  async updateProfile(
     @GetUser() user: User,
-    @Body() updateProfileDto: UpdateProfileDto
+    @UploadedFiles() files: { avatar?: Express.Multer.File[], cover?: Express.Multer.File[] },
+    @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.profileService.update(user.profile.id, updateProfileDto);
+    return this.profileService.updateProfile(user.profile.id, files.avatar?.[0], files.cover?.[0], updateProfileDto);
   }
 
 }

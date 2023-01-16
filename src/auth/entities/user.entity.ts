@@ -24,7 +24,6 @@ export class User extends GenericEntity {
     })
     encryptedPrivateKey: string;
 
-
     @OneToOne(
         () => Profile,
         {
@@ -34,6 +33,13 @@ export class User extends GenericEntity {
     )
     @JoinColumn()
     profile: Profile;
+
+    @Column({
+        type: "enum",
+        enum: ["enabled", "disabled", "banned"],
+        default: "enabled"
+    })
+    status: "enabled" | "disabled" | "banned";
 
     @BeforeInsert()
     @BeforeUpdate()
