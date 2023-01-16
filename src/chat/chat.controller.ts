@@ -3,7 +3,7 @@
 import { GetUser } from '@/auth/decorators/user.decorator';
 import { User } from '@/auth/entities/user.entity';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { Body, Controller, Get, Param, Patch, Post, Query, Request, UnauthorizedException, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UnauthorizedException, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateGroupChatDTO } from './dto/update-group-chat.dto';
@@ -24,7 +24,7 @@ export class ChatController {
         @Query('page') page = 1,
         @Query('limit') take = 10,
     ) {
-        return this.chatService.findChatsByProfile(user.profile, page, take);
+        return this.chatService.getRecentChats(user.profile, page, take);
     }
 
     @Post()
@@ -53,6 +53,14 @@ export class ChatController {
         @GetUser() user: User
     ) {
         return this.chatService.findOne(id);
+    }
+
+    @Get('with/:id')
+    async getProfileChats(
+        @GetUser() user: User,
+        @Param('id') id: string,
+    ) {
+        return this.chatService.findChat([user.profile.id, id], true);
     }
 
     @Patch(':id')
@@ -93,5 +101,13 @@ export class ChatController {
         @UploadedFiles() files: Express.Multer.File[]
     ) {
         return this.chatService.sendMessage(sendMessageDto, user.profile, files);
+    }
+
+    @Delete('message/:id')
+    async deleteMessage(
+        @GetUser() user: User,
+        @Param('id') id: string,
+    ) {
+        return this.chatService.deleteContentOfMessage(id, user.profile.id);
     }
 }

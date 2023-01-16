@@ -1,8 +1,7 @@
 import { ChatService } from '@/chat/chat.service';
-import addPaginationToOptions from '@/utils/addPaginationToOptions';
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AcceptFriendRequestDTO } from './dto/accept-friend-request.dto';
 import { Friendship } from './entities/friendship.entity';
 import { Profile } from './entities/profile.entity';
@@ -27,30 +26,19 @@ export class FriendshipSerivce {
             query?: string
         }) {
         profile = typeof profile === 'string' ? profile : profile.id;
-        const searchByName: any = options?.query &&
-            [
-                {
-                    firstName: Like(`%${options?.query}%`),
-                },
-                {
-                    lastName: Like(`%${options?.query}%`),
-                }
-            ];
-        return this.frienshipRepository.find(addPaginationToOptions<Friendship>({
-            where: [
-                options.type !== "incoming" && {
-                    sender: { id: profile },
-                    status: options?.status || 'accepted',
-                    receiver: searchByName
-                },
-                options.type !== "outgoing" && {
-                    receiver: { id: profile },
-                    status: options?.status || 'accepted',
-                    sender: searchByName
-                }
-            ]
-        }, options.page, options.take));
+        options.page = options.page || 1;
+        options.take = options.take || 10;
+        options.type = options.type || 'all';
 
+        return this.frienshipRepository.createQueryBuilder('friendship')
+            .leftJoinAndSelect('friendship.sender', 'sender')
+            .leftJoinAndSelect('friendship.receiver', 'receiver')
+            .where('friendship.status = :status', { status: options?.status || 'accepted' })
+            .andWhere(`((sender.id = :profile AND CONCAT(receiver.firstName, ' ', receiver.lastName) LIKE :query AND :type in ('all', 'outgoing')) OR
+            (receiver.id = :profile AND CONCAT(sender.firstName, ' ', sender.lastName) LIKE :query AND :type in ('all', 'incoming')))`, { profile, query: `%${options?.query}%`, type: options?.type })
+            .skip((options.page - 1) * options.take)
+            .take(options.take)
+            .getMany();
     }
 
     async preparePendingFriendship(sender: Profile | string, receiver: Profile | string): Promise<[Friendship, Profile, Profile]> {

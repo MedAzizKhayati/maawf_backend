@@ -1,4 +1,4 @@
-import { GroupChatToProfile } from "@/chat/entities/group-chat-to-profile.entity";
+import { GroupChatToProfile } from "@/chat/entities/chat-to-profile.entity";
 import { Message } from "@/chat/entities/message.entity";
 import { GenericEntity } from "@/generics/entity";
 import capitalize from "@/utils/capitalize";

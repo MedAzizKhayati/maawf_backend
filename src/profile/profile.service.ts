@@ -1,8 +1,7 @@
 import { GenericsService } from '@/generics/service';
-import addPaginationToOptions from '@/utils/addPaginationToOptions';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Profile } from './entities/profile.entity';
@@ -23,18 +22,14 @@ export class ProfileService extends GenericsService<Profile, CreateProfileDto, U
       query?: string
     }) {
     profile = typeof profile === 'string' ? profile : profile.id;
-    return this.repository.find(addPaginationToOptions<Profile>({
-      where: [
-        {
-          id: Not(profile),
-          firstName: options?.query && Like(`%${options?.query}%`),
-        },
-        {
-          id: Not(profile),
-          lastName: options?.query && Like(`%${options?.query}%`),
-        }
-      ]
-    }, options.page, options.take));
+    options.page = options.page || 1;
+    options.take = options.take || 10;
+    return this.repository.createQueryBuilder('profile')
+      .where('profile.id != :profile', { profile })
+      .andWhere("CONCAT(profile.firstName, ' ', profile.lastName) LIKE :query", { query: `%${options?.query}%` })
+      .skip((options.page - 1) * options.take)
+      .take(options.take)
+      .getMany();
   }
 
   async updateProfile(profile: Profile | string, avatar: Express.Multer.File, cover: Express.Multer.File, updateProfileDto: UpdateProfileDto) {
