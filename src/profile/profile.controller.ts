@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, UseGuards,Query, UseInterceptors, UploadedFiles} from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, UseGuards, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
@@ -9,6 +9,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import uniqueFileName from '@/utils/uniqueFileName';
 import imageFilter from '@/utils/imageFilter';
+import * as fs from 'fs';
 
 @Controller('profile')
 export class ProfileController {
@@ -37,18 +38,23 @@ export class ProfileController {
   @Patch()
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileFieldsInterceptor([
-    {
-      name: 'avatar', maxCount: 1,
-    },
-    {
-      name: 'cover', maxCount: 1
-    }
-  ],
-
+  @UseInterceptors(FileFieldsInterceptor(
+    [
+      {
+        name: 'avatar', maxCount: 1,
+      },
+      {
+        name: 'cover', maxCount: 1
+      }
+    ],
     {
       storage: diskStorage({
-        destination: (req, file, cb) => {
+        destination: (_, file, cb) => {
+          // create folder if not exists
+          if (!fs.existsSync('./public/uploads/profiles')) {
+            fs.mkdirSync('./public/uploads/profiles/avatar', { recursive: true });
+            fs.mkdirSync('./public/uploads/profiles/cover', { recursive: true });
+          }
           if (file.fieldname === 'avatar')
             return cb(null, './public/uploads/profiles/avatar');
           if (file.fieldname === 'cover')
