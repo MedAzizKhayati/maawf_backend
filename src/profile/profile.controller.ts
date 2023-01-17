@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, UseGuards, ForbiddenException, Query, UseInterceptors, UploadedFiles, UploadedFile, HttpException } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, UseGuards,Query, UseInterceptors, UploadedFiles} from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
@@ -63,7 +63,7 @@ export class ProfileController {
     @UploadedFiles() files: { avatar?: Express.Multer.File[], cover?: Express.Multer.File[] },
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.profileService.updateProfile(user.profile.id, files.avatar?.[0], files.cover?.[0], updateProfileDto);
+    return this.profileService.updateProfile(user.profile.id, files?.avatar?.[0], files?.cover?.[0], updateProfileDto);
   }
 
 }
