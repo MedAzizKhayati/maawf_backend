@@ -284,7 +284,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             }).then(() => this.findOne(groupChatId));
     }
 
-    async findOne(id: string): Promise<GroupChat> {
+    async findOne(id: string, profile?: Profile | string): Promise<GroupChat> {
         const groupChat = await this.groupChatRepository
             .createQueryBuilder('gc')
             .where('gc.id = :id', { id })
@@ -293,7 +293,13 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
             .leftJoinAndSelect('gc.lastMessage', 'messages')
             .leftJoinAndSelect('messages.profile', 'p')
             .getOne() as any;
-
+        profile = typeof profile === 'string' ? profile : profile?.id;
+        // check if the profile exists
+        if (!groupChat)
+            throw new NotFoundException('Chat not found');
+        if (profile && !groupChat.groupChatToProfiles.find(gctp => gctp.profile.id === profile))
+            throw new ForbiddenException('You are a member of this chat');
+        groupChat?.lastMessage?.fromJson();
         return groupChat;
     }
 
@@ -352,6 +358,16 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
         });
 
         return groupChat;
+    }
+
+    async deleteGroupChat(groupChat: GroupChat | string, profile: Profile | string): Promise<void> {
+        groupChat = typeof groupChat === 'string' ? await this.groupChatRepository.findOneByOrFail({ id: groupChat }) : groupChat;
+        const isUserAdmin = await this.isUserAdminOfGroupChat(groupChat, profile);
+        if (!isUserAdmin)
+            throw new ForbiddenException('You are not an admin of this group chat');
+        if (groupChat.isPrivate)
+            throw new ForbiddenException('You cannot delete a private chat');
+        await this.groupChatRepository.delete(groupChat.id);
     }
 
     private deleteFiles(files: Attachment[]) {

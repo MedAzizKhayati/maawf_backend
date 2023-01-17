@@ -50,8 +50,9 @@ export class ChatController {
     @Get(':id')
     findOne(
         @Param('id') id: string,
+        @GetUser() user: User
     ) {
-        return this.chatService.findOne(id);
+        return this.chatService.findOne(id,user.profile.id);
     }
 
     @Get('with/:id')
@@ -71,8 +72,6 @@ export class ChatController {
         if (!isUserInGroupChat) throw new UnauthorizedException();
         return this.chatService.updateGroupChat(updateGroupChatDTO);
     }
-
-
 
     @Patch('members/:chatId')
     async updateMember(
@@ -111,4 +110,13 @@ export class ChatController {
     ) {
         return this.chatService.deleteContentOfMessage(id, user.profile.id);
     }
+
+    @Delete(':id')
+    async deleteChat(
+        @GetUser() user: User,
+        @Param('id') id: string, 
+    ) {
+        return this.chatService.deleteGroupChat(id, user.profile.id);
+    } 
+
 }

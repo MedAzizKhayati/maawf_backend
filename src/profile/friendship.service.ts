@@ -28,13 +28,14 @@ export class FriendshipSerivce {
         profile = typeof profile === 'string' ? profile : profile.id;
         options.page = options.page || 1;
         options.take = options.take || 10;
-        
+        options.type = options.type || 'all';
+
         return this.frienshipRepository.createQueryBuilder('friendship')
             .leftJoinAndSelect('friendship.sender', 'sender')
             .leftJoinAndSelect('friendship.receiver', 'receiver')
             .where('friendship.status = :status', { status: options?.status || 'accepted' })
             .andWhere(`((sender.id = :profile AND CONCAT(receiver.firstName, ' ', receiver.lastName) LIKE :query AND :type in ('all', 'outgoing')) OR
-            (receiver.id = :profile AND CONCAT(sender.firstName, ' ', sender.lastName) LIKE :query AND :type in ('all', 'incoming')))`, { profile, query: `%${options?.query}%` })
+            (receiver.id = :profile AND CONCAT(sender.firstName, ' ', sender.lastName) LIKE :query AND :type in ('all', 'incoming')))`, { profile, query: `%${options?.query}%`, type: options?.type })
             .skip((options.page - 1) * options.take)
             .take(options.take)
             .getMany();
