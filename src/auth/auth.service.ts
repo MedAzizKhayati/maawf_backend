@@ -10,7 +10,6 @@ import * as bcrypt from 'bcrypt';
 import { Payload } from './interfaces/payload';
 import { JwtService } from '@nestjs/jwt';
 
-
 @Injectable()
 export class AuthService extends GenericsService<User, CreateAuthDto, UpdateAuthDto> {
     constructor(

@@ -1,6 +1,19 @@
-import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
+import addPaginationToOptions from '@/utils/addPaginationToOptions';
+import { DeepPartial, FindOptionsOrder, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { GenericEntity } from './entity';
 
+
+export type FindAllOptions = {
+    page?: number;
+    after?: DeepPartial<any> | string;
+    take?: number;
+    where?: FindOptionsWhere<any>;
+}
+
+const DEFAULT_FIND_ALL_OPTIONS: FindAllOptions = {
+    page: 1,
+    take: 10
+}
 
 // A generic service for all the services to extend from
 export abstract class GenericsService<Entity extends GenericEntity, CDto extends DeepPartial<Entity>, UDto extends DeepPartial<Entity>> {
@@ -12,10 +25,20 @@ export abstract class GenericsService<Entity extends GenericEntity, CDto extends
         return this.repository.save(entity);
     }
 
-    // Find all entities
-    async findAll() {
-        return this.repository.find();
+    // Find all entities with pagination (after an ID)
+    async findAll(options = DEFAULT_FIND_ALL_OPTIONS) {
+        let { page, take, after, where } = { ...DEFAULT_FIND_ALL_OPTIONS, ...options };
+        after = after ? (typeof after === 'string' ? after : after.id) : null;
+
+        where = (after ? { id: MoreThan(after), ...where } : {}) as FindOptionsWhere<Entity>;
+        return this.repository.find(addPaginationToOptions({
+            where,
+            order: {
+                id: 'ASC'
+            } as FindOptionsOrder<Entity>
+        }, page, take));
     }
+
 
     // Find one entity by id
     async findOne(id: string) {
@@ -28,7 +51,7 @@ export abstract class GenericsService<Entity extends GenericEntity, CDto extends
     }
 
     // Delete an entity
-    async remove(id: string) {
+    async delete(id: string) {
         return this.repository.delete(id);
     }
 

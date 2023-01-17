@@ -8,11 +8,15 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
   // Swagger configuration
   const options = new DocumentBuilder().build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
+
+  // CORS configuration
+  app.enableCors({
+    origin: "*",
+  });
 
   // Validation pipe
   app.useGlobalPipes(

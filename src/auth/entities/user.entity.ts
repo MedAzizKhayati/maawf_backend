@@ -11,13 +11,19 @@ export class User extends GenericEntity {
     })
     email: string;
 
-    @Column()
+    @Column({
+        nullable: false
+    })
     password: string;
 
-    @Column({
-        nullable: true
-    })
+    @Column()
     phonenumber: string;
+
+    @Column({
+        type: 'longtext'
+    })
+    encryptedPrivateKey: string;
+
 
     @OneToOne(
         () => Profile,
