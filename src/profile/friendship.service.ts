@@ -151,9 +151,9 @@ export class FriendshipSerivce {
         return await this.frienshipRepository.save(friendship);
     }
 
-    async findFriendship(sender: Profile | string, receiver: Profile | string) {
-        const senderId = typeof sender === 'string' ? sender : sender.id;
-        const receiverId = typeof receiver === 'string' ? receiver : receiver.id;
+    async findFriendship(profile1: Profile | string, profile2: Profile | string) {
+        const senderId = typeof profile1 === 'string' ? profile1 : profile1.id;
+        const receiverId = typeof profile2 === 'string' ? profile2 : profile2.id;
 
         return (await this.frienshipRepository.findOne({
             where: [

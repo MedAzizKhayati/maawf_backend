@@ -29,24 +29,9 @@ export class AuthController {
     return this.authService.userWithoutPassword(user);
   }
 
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  findAll() {
-    return this.authService.findAll();
+  @Get('test')
+  test() {
+    return this.authService.test();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.delete(id);
-  }
 }

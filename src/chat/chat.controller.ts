@@ -43,7 +43,8 @@ export class ChatController {
         @GetUser() user: User
     ) {
         const isUserInGroupChat = await this.chatService.isUserInGroupChat(id, user.profile.id);
-        if (!isUserInGroupChat) throw new UnauthorizedException();
+        if (!isUserInGroupChat)
+            throw new UnauthorizedException('You are not a member of this chat');
         return this.chatService.getMessages(id, page, take);
     }
 
@@ -52,7 +53,7 @@ export class ChatController {
         @Param('id') id: string,
         @GetUser() user: User
     ) {
-        return this.chatService.findOne(id,user.profile.id);
+        return this.chatService.findOne(id, user.profile.id);
     }
 
     @Get('with/:id')
@@ -69,7 +70,8 @@ export class ChatController {
         @Body() updateGroupChatDTO: UpdateGroupChatDTO,
     ) {
         const isUserInGroupChat = await this.chatService.isUserAdminOfGroupChat(updateGroupChatDTO.id, user.profile.id);
-        if (!isUserInGroupChat) throw new UnauthorizedException();
+        if (!isUserInGroupChat)
+            throw new UnauthorizedException("You don't have permission to update this group chat");
         return this.chatService.updateGroupChat(updateGroupChatDTO);
     }
 
@@ -114,9 +116,9 @@ export class ChatController {
     @Delete(':id')
     async deleteChat(
         @GetUser() user: User,
-        @Param('id') id: string, 
+        @Param('id') id: string,
     ) {
         return this.chatService.deleteGroupChat(id, user.profile.id);
-    } 
+    }
 
 }
