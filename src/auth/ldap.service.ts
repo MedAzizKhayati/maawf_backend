@@ -56,7 +56,7 @@ export class LdapService {
         return this.search({ filter: '(objectClass=person)', scope: 'sub' }) as Promise<Array<any>>;
     }
 
-    getUser(email: string) {
+    getUser(email: string): Promise<any> {
         return new Promise((resolve, reject) => {
             this.ldapClient.search(this.ldapBaseDN, { filter: `(mail=${email})`, scope: 'sub' }, (err, res) => {
                 if (err)
@@ -67,6 +67,7 @@ export class LdapService {
                     user = entry.object;
                 });
                 res.on('end', () => {
+                    user.certificate = user.uid;
                     resolve(user);
                 });
             });

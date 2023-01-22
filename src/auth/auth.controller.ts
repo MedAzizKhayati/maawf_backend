@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { User } from './entities/user.entity';
@@ -28,10 +27,4 @@ export class AuthController {
   ) {
     return this.authService.userWithoutPassword(user);
   }
-
-  @Get('test')
-  test() {
-    return this.authService.test();
-  }
-
 }

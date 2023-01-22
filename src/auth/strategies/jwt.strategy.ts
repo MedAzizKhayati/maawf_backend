@@ -1,13 +1,17 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Payload } from '../interfaces/payload';
-import { UserService } from '../user.service';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { LdapService } from '../ldap.service';
+import { CryptoService } from '../crypto.service';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor(
-        private readonly userService: UserService,
+        private readonly authService: AuthService,
+        private readonly ldapService: LdapService,
+        private readonly cryptoService: CryptoService
     ) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -17,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: Payload) {
-        const user = await this.userService.findOne(payload.id);
+        const user = await this.authService.findOne(payload.id);
         if (!user) {
             throw new UnauthorizedException('Account not found');
         }
@@ -27,6 +31,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         else if (user.status === 'banned') {
             throw new UnauthorizedException('Your account has been permanently banned');
         }
+
+        const ldapUser = await this.ldapService.getUser(user.email);
+        if (!ldapUser) {
+            throw new UnauthorizedException('LDAP account not found');
+        }        
+        
+        const isCertValid = this.cryptoService.isCertificateValid(
+            this.cryptoService.pemToCert(ldapUser.certificate),
+            this.authService.authorityCert
+        );
+        if (!isCertValid) {
+            throw new UnauthorizedException('Your certificate is not valid');
+        }
+
         return user;
     }
 }

@@ -2,6 +2,7 @@ import { pki } from 'node-forge';
 import { User } from './entities/user.entity';
 
 export class CryptoService {
+
     public generatedRsaKeyPair() {
         const keys = pki.rsa.generateKeyPair(512);
         return keys;
@@ -25,19 +26,25 @@ export class CryptoService {
     }
 
     public createCertificateFromCertificationRequest(
-        csr: string,
+        csrPem: string,
         authority: pki.Certificate,
         authorityKey: pki.rsa.PrivateKey
     ) {
+        const csr = pki.certificationRequestFromPem(csrPem);
         const cert = pki.createCertificate();
-        cert.publicKey = pki.publicKeyFromPem(csr);
+        cert.publicKey = csr.publicKey;
         cert.validity.notBefore = new Date();
         cert.validity.notAfter = new Date();
         cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 3);
-        cert.setSubject(pki.certificateFromPem(csr).subject.attributes);
+        cert.setSubject(csr.subject.attributes);
         cert.setIssuer(authority.subject.attributes);
         cert.sign(authorityKey);
         return cert;
+    }
+
+    public verifyCSR(csrPem: string, publicKeyPem: string) {
+        const csr = pki.certificationRequestFromPem(csrPem);
+        return pki.publicKeyToPem(csr.publicKey) === publicKeyPem;
     }
 
     public certToPem(cert: pki.Certificate) {
@@ -48,7 +55,8 @@ export class CryptoService {
         return pki.certificateFromPem(pem);
     }
 
-    public isCertificateValid(cert: pki.Certificate) {
-        return cert.validity.notBefore < new Date() && cert.validity.notAfter > new Date();
+    public isCertificateValid(cert: pki.Certificate, authority: pki.Certificate) {
+        const caStore = pki.createCaStore([authority]);
+        return pki.verifyCertificateChain(caStore, [cert]);
     }
 }

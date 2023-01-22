@@ -5,15 +5,21 @@ import { Repository } from 'typeorm';
 import { CreateAuthDto } from './dto/create-user.dto';
 import { UpdateAuthDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { Payload } from './interfaces/payload';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LdapService } from './ldap.service';
 import { CryptoService } from './crypto.service';
+import { pki } from 'node-forge';
+import { readFileSync } from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AuthService extends GenericsService<User, CreateAuthDto, UpdateAuthDto> {
+    private authorityKey: pki.rsa.PrivateKey;
+    public authorityCert: pki.Certificate;
+    private logger = new Logger(AuthService.name);
     constructor(
         @InjectRepository(User) userRepository: Repository<User>,
         private jwtService: JwtService,
@@ -21,31 +27,30 @@ export class AuthService extends GenericsService<User, CreateAuthDto, UpdateAuth
         private cryptoService: CryptoService
     ) {
         super(userRepository);
-    }
-
-    async test() {
-        // const users = await this.repository.find();
-        // // pick random user from db
-        // const user = users[Math.floor(Math.random() * users.length)];
-        // try {
-        //     // generate certificate for user using crypto 
-        //     const certificate = this.cryptoService.createSelfSignedCertificate(user);
-        //     const pem = this.cryptoService.certToPem(certificate);
-
-        //     // try to create user 
-        //     const ldapUser = await this.ldapService.addUser(user, pem);
-        //     return ldapUser;
-            
-        // } catch (error) {
-        //     console.log(error);
-        //     return "error";
-        // }
-        return 'test';
+        this.loadAuthority();
     }
 
     async create(createDto: CreateAuthDto): Promise<User> {
+        const isCSRValid = this.cryptoService.verifyCSR(createDto.csr, createDto.publicKey);
+        if (!isCSRValid) {
+            throw new BadRequestException("Invalid CSR");
+        }
+
+        const isEmailTaken = await this.repository.findOneBy({ email: createDto.email });
+        if (isEmailTaken) {
+            throw new BadRequestException("Email already taken");
+        }
+
+        const userCert = this.cryptoService.createCertificateFromCertificationRequest(
+            createDto.csr,
+            this.authorityCert,
+            this.authorityKey
+        );
+
+        const userPem = this.cryptoService.certToPem(userCert);
         const user = this.repository.create(createDto);
         user.profile = createDto.getProfileEntity();
+        await this.ldapService.addUser(user, userPem);
         const userResponse = await this.repository.save(user);
         return this.userWithoutPassword(userResponse);
     }
@@ -68,5 +73,33 @@ export class AuthService extends GenericsService<User, CreateAuthDto, UpdateAuth
 
     signPayload(payload: Payload) {
         return this.jwtService.sign(payload);
+    }
+
+    loadAuthority() {
+        try {
+            const caDir = path.resolve(__dirname, '../../certification_authority');
+
+            // load them from files cert.pem and key.pem using fs
+            const keyPem = readFileSync(
+                caDir + '/key.pem',
+                { encoding: 'utf8' }
+            );
+            const certPem = readFileSync(
+                caDir + '/cert.pem',
+                { encoding: 'utf8' }
+            );
+
+            // convert them to forge objects
+            this.authorityKey = pki.privateKeyFromPem(keyPem);
+            this.authorityCert = pki.certificateFromPem(certPem);
+            this.logger.log("Loaded authority key and certificate");
+        } catch (error) {
+            this.logger.error("Error loading authority key and certificate");
+            throw new Error(`
+                Error loading authority key and certificate.
+                Make sure you have a key.pem and cert.pem file in the root of the project 
+                inside a folder called certication_authority
+            `);
+        }
     }
 }
