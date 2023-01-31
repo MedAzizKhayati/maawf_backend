@@ -1,19 +1,19 @@
-import { IsArray, IsDefined, IsNotEmpty, IsOptional } from "class-validator";
+import { IsArray, IsDefined, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateGroupChatDTO {
-    @IsNotEmpty()
-    @IsOptional()
-    name?: string;
+  @IsNotEmpty()
+  @IsOptional()
+  name?: string;
 
-    @IsNotEmpty()
-    encryptedSymmetricKey: string;
+  @IsNotEmpty()
+  encryptedSymmetricKey: string;
 
-    @IsDefined()
-    @IsArray()
-    members: Member[] = [];
+  @IsDefined()
+  @IsArray()
+  members: Member[] = [];
 }
 
 export class Member {
-    id: string;
-    encryptedSymmetricKey: string;
+  id: string;
+  encryptedSymmetricKey: string;
 }

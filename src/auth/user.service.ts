@@ -9,15 +9,11 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class UserService extends GenericsService<User, CreateAuthDto, UpdateAuthDto> {
-  constructor(
-    @InjectRepository(User) userRepository: Repository<User>,
-    private readonly authService: AuthService
-  ) {
+  constructor(@InjectRepository(User) userRepository: Repository<User>, private readonly authService: AuthService) {
     super(userRepository);
   }
 
   create(createDto: CreateAuthDto): Promise<User> {
     return this.authService.create(createDto);
   }
-
 }

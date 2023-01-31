@@ -9,51 +9,42 @@ import { AcceptFriendRequestDTO } from './dto/accept-friend-request.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('friendships')
 export class FrienshipController {
-    constructor(private readonly friendshipService: FriendshipSerivce) { }
+  constructor(private readonly friendshipService: FriendshipSerivce) {}
 
-    @Get()
-    findAll(
-        @GetUser() user: User,
-        @Query('page') page = 1,
-        @Query('limit') take = 10,
-        @Query('status') status: Friendship['status'] = 'accepted',
-        @Query('type') type: "all" | "incoming" | "outgoing",
-        @Query('query') query?: string,
-        @Query('id') id?: string,
-    ) {
-        return this.friendshipService.findAll(id || user.profile, { page, take, status, type, query });
-    }
+  @Get()
+  findAll(
+    @GetUser() user: User,
+    @Query('page') page = 1,
+    @Query('limit') take = 10,
+    @Query('status') status: Friendship['status'] = 'accepted',
+    @Query('type') type: 'all' | 'incoming' | 'outgoing',
+    @Query('query') query?: string,
+    @Query('id') id?: string,
+  ) {
+    return this.friendshipService.findAll(id || user.profile, { page, take, status, type, query });
+  }
 
-    @Post(':id')
-    async sendFriendRequest(
-        @Param('id') id: string,
-        @GetUser() user: User,
-    ) {
-        return this.friendshipService.sendFriendRequest(user.profile, id);
-    }
+  @Post(':id')
+  async sendFriendRequest(@Param('id') id: string, @GetUser() user: User) {
+    return this.friendshipService.sendFriendRequest(user.profile, id);
+  }
 
-    @Patch('accept/:id')
-    async acceptFriendRequest(
-        @Param('id') id: string,
-        @GetUser() user: User,
-        @Body() acceptFriendRequestDTO: AcceptFriendRequestDTO,
-    ) {
-        return this.friendshipService.acceptFriendRequest(id, user.profile, acceptFriendRequestDTO);
-    }
+  @Patch('accept/:id')
+  async acceptFriendRequest(
+    @Param('id') id: string,
+    @GetUser() user: User,
+    @Body() acceptFriendRequestDTO: AcceptFriendRequestDTO,
+  ) {
+    return this.friendshipService.acceptFriendRequest(id, user.profile, acceptFriendRequestDTO);
+  }
 
-    @Patch('reject/:id')
-    async rejectFriendRequest(
-        @Param('id') id: string,
-        @GetUser() user: User,
-    ) {
-        return this.friendshipService.rejectFriendRequest(id, user.profile);
-    }
+  @Patch('reject/:id')
+  async rejectFriendRequest(@Param('id') id: string, @GetUser() user: User) {
+    return this.friendshipService.rejectFriendRequest(id, user.profile);
+  }
 
-    @Patch('cancel/:id')
-    async cancelFriendRequest(
-        @Param('id') id: string,
-        @GetUser() user: User,
-    ) {
-        return this.friendshipService.cancelFriendRequest(user.profile, id);
-    }
+  @Patch('cancel/:id')
+  async cancelFriendRequest(@Param('id') id: string, @GetUser() user: User) {
+    return this.friendshipService.cancelFriendRequest(user.profile, id);
+  }
 }

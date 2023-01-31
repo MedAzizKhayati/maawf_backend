@@ -10,12 +10,9 @@ import { GroupChatToProfile } from './entities/chat-to-profile.entity';
 import { ChatController } from './chat.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Profile, Message, GroupChat, GroupChatToProfile]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Profile, Message, GroupChat, GroupChatToProfile]), AuthModule],
   controllers: [ChatController],
   providers: [ChatGateway, ChatService],
-  exports: [ChatService]
+  exports: [ChatService],
 })
-export class ChatModule { }
+export class ChatModule {}

@@ -22,10 +22,8 @@ dotenv.config();
       signOptions: { expiresIn: '15d' },
     }),
   ],
-  controllers: [
-    AuthController,
-  ],
+  controllers: [AuthController],
   providers: [AuthService, JwtStrategy, UserService, LdapService, CryptoService],
-  exports: [UserService]
+  exports: [UserService, LdapService],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -13,16 +13,11 @@ import * as fs from 'fs';
 
 @Controller('profile')
 export class ProfileController {
-  constructor(private readonly profileService: ProfileService) { }
+  constructor(private readonly profileService: ProfileService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(
-    @Query('page') page = 1,
-    @Query('limit') take = 10,
-    @Query('query') query?: string,
-    @GetUser() user?: User,
-  ) {
+  findAll(@Query('page') page = 1, @Query('limit') take = 10, @Query('query') query?: string, @GetUser() user?: User) {
     return this.profileService.query(user?.profile?.id || '', {
       page,
       take,
@@ -38,38 +33,40 @@ export class ProfileController {
   @Patch()
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileFieldsInterceptor(
-    [
-      {
-        name: 'avatar', maxCount: 1,
-      },
-      {
-        name: 'cover', maxCount: 1
-      }
-    ],
-    {
-      storage: diskStorage({
-        destination: (_, file, cb) => {
-          // create folder if not exists
-          if (!fs.existsSync('./public/uploads/profiles')) {
-            fs.mkdirSync('./public/uploads/profiles/avatar', { recursive: true });
-            fs.mkdirSync('./public/uploads/profiles/cover', { recursive: true });
-          }
-          if (file.fieldname === 'avatar')
-            return cb(null, './public/uploads/profiles/avatar');
-          if (file.fieldname === 'cover')
-            return cb(null, './public/uploads/profiles/cover');
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        {
+          name: 'avatar',
+          maxCount: 1,
         },
-        filename: uniqueFileName,
-      }),
-      fileFilter: imageFilter,
-    }))
+        {
+          name: 'cover',
+          maxCount: 1,
+        },
+      ],
+      {
+        storage: diskStorage({
+          destination: (_, file, cb) => {
+            // create folder if not exists
+            if (!fs.existsSync('./public/uploads/profiles')) {
+              fs.mkdirSync('./public/uploads/profiles/avatar', { recursive: true });
+              fs.mkdirSync('./public/uploads/profiles/cover', { recursive: true });
+            }
+            if (file.fieldname === 'avatar') return cb(null, './public/uploads/profiles/avatar');
+            if (file.fieldname === 'cover') return cb(null, './public/uploads/profiles/cover');
+          },
+          filename: uniqueFileName,
+        }),
+        fileFilter: imageFilter,
+      },
+    ),
+  )
   async updateProfile(
     @GetUser() user: User,
-    @UploadedFiles() files: { avatar?: Express.Multer.File[], cover?: Express.Multer.File[] },
+    @UploadedFiles() files: { avatar?: Express.Multer.File[]; cover?: Express.Multer.File[] },
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.profileService.updateProfile(user.profile.id, files?.avatar?.[0], files?.cover?.[0], updateProfileDto);
   }
-
 }

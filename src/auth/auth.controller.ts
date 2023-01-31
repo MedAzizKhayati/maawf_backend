@@ -8,7 +8,7 @@ import { GetUser } from './decorators/user.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   register(@Body() createAuthDto: CreateAuthDto) {
@@ -22,9 +22,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('whoami')
-  whoami(
-    @GetUser() user: User
-  ) {
+  whoami(@GetUser() user: User) {
     return this.authService.userWithoutPassword(user);
   }
 }

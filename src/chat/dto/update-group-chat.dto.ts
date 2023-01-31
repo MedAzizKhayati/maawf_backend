@@ -1,17 +1,17 @@
-import { IsDefined, IsNotEmpty, IsOptional } from "class-validator";
-import { Member } from "./create-chat.dto";
+import { IsDefined, IsNotEmpty, IsOptional } from 'class-validator';
+import { Member } from './create-chat.dto';
 
 export class UpdateGroupChatDTO {
-    @IsNotEmpty()
-    @IsDefined()
-    id: string;
+  @IsNotEmpty()
+  @IsDefined()
+  id: string;
 
-    @IsOptional()
-    name?: string;
+  @IsOptional()
+  name?: string;
 
-    @IsOptional()
-    newMembers?: Member[] = [];
+  @IsOptional()
+  newMembers?: Member[] = [];
 
-    @IsOptional()
-    removeMembers?: string[] = [];
+  @IsOptional()
+  removeMembers?: string[] = [];
 }

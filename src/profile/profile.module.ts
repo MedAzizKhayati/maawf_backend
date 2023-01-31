@@ -7,13 +7,12 @@ import { Friendship } from './entities/friendship.entity';
 import { FriendshipSerivce } from './friendship.service';
 import { ChatModule } from '@/chat/chat.module';
 import { FrienshipController } from './friendship.controller';
+import { User } from '@/auth/entities/user.entity';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Profile, Friendship]),
-    ChatModule
-  ],
+  imports: [TypeOrmModule.forFeature([Profile, Friendship, User]), ChatModule, AuthModule],
   controllers: [ProfileController, FrienshipController],
-  providers: [ProfileService, FriendshipSerivce]
+  providers: [ProfileService, FriendshipSerivce],
 })
-export class ProfileModule { }
+export class ProfileModule {}
