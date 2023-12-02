@@ -16,8 +16,10 @@ export class User extends GenericEntity {
   })
   password: string;
 
-  @Column()
-  phonenumber: string;
+  @Column({
+    nullable: true,
+  })
+  phonenumber?: string;
 
   @Column({
     type: 'longtext',

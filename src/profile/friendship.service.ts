@@ -1,9 +1,8 @@
 import { User } from '@/auth/entities/user.entity';
-import { LdapService } from '@/auth/ldap.service';
 import { ChatService } from '@/chat/chat.service';
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AcceptFriendRequestDTO } from './dto/accept-friend-request.dto';
 import { Friendship } from './entities/friendship.entity';
 import { Profile } from './entities/profile.entity';
@@ -15,11 +14,9 @@ export class FriendshipSerivce {
     @InjectRepository(Friendship)
     private readonly frienshipRepository: Repository<Friendship>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly profileService: ProfileService,
     private readonly chatService: ChatService,
-    private readonly ldapService: LdapService
-  ) { }
+  ) {}
 
   async findAll(
     profile: Profile | string,
@@ -50,24 +47,16 @@ export class FriendshipSerivce {
       .take(options.take)
       .getMany();
 
-    const profileIds = results.map(friendship => {
-      return friendship.sender.id === profile ? friendship.receiver.id : friendship.sender.id;
-    });
-    const userAccounts = await this.userRepository.find({ where: { profile: { id: In(profileIds) } } });
-    return Promise.all(results.map(async friendship => {
-      const user = userAccounts.find(userAccount =>
-        userAccount.profile.id === friendship.sender.id ||
-        userAccount.profile.id === friendship.receiver.id
-      );
-      const ldapUser = await this.ldapService.getUser(user.email);
-      const otherProfile: any = friendship.sender.id === profile ? friendship.receiver : friendship.sender;
-      otherProfile.certificate = ldapUser.certificate;
-      return {
-        ...friendship,
-        sender: friendship.sender.id === profile ? friendship.sender : otherProfile,
-        receiver: friendship.receiver.id === profile ? friendship.receiver : otherProfile,
-      }
-    }));
+    return Promise.all(
+      results.map(async friendship => {
+        const otherProfile: any = friendship.sender.id === profile ? friendship.receiver : friendship.sender;
+        return {
+          ...friendship,
+          sender: friendship.sender.id === profile ? friendship.sender : otherProfile,
+          receiver: friendship.receiver.id === profile ? friendship.receiver : otherProfile,
+        };
+      }),
+    );
   }
 
   async preparePendingFriendship(

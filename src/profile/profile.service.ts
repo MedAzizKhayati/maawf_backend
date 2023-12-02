@@ -1,5 +1,4 @@
 import { User } from '@/auth/entities/user.entity';
-import { LdapService } from '@/auth/ldap.service';
 import { GenericsService } from '@/generics/service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +12,6 @@ export class ProfileService extends GenericsService<Profile, CreateProfileDto, U
   constructor(
     @InjectRepository(Profile) repo: Repository<Profile>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly ldapService: LdapService,
   ) {
     super(repo);
   }
@@ -38,13 +36,7 @@ export class ProfileService extends GenericsService<Profile, CreateProfileDto, U
       .take(options.take)
       .getMany();
 
-    return Promise.all(results.map(async (user) => {
-      const ldapUser = await this.ldapService.getUser(user.email);
-      return {
-        ...user.profile,
-        certificate: ldapUser.certificate,
-      }
-    }))
+    return results.map(result => result.profile);
   }
 
   async updateProfile(

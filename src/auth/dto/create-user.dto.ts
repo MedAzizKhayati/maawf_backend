@@ -31,12 +31,6 @@ export class CreateAuthDto extends CreateProfileDto {
   })
   publicKey: string;
 
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'The certication request of the user',
-  })
-  csr: string;
-
   getProfileEntity(): Profile {
     const profile = new Profile();
     profile.firstName = this.firstName;
