@@ -14,6 +14,8 @@ services:
       - DB_USER=maawf
       - DB_PASSWORD=maawf
       - DB_NAME=maawf_db
+    depends_on:
+      - mysql-db
 
   mysql-db:
     image: mysql:latest
