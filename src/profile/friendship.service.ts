@@ -1,4 +1,3 @@
-import { User } from '@/auth/entities/user.entity';
 import { ChatService } from '@/chat/chat.service';
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +12,6 @@ export class FriendshipSerivce {
   constructor(
     @InjectRepository(Friendship)
     private readonly frienshipRepository: Repository<Friendship>,
-    @InjectRepository(User)
     private readonly profileService: ProfileService,
     private readonly chatService: ChatService,
   ) {}

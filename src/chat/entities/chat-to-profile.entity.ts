@@ -8,7 +8,7 @@ export class GroupChatToProfile extends GenericEntity {
   @Column({
     nullable: true,
   })
-  public nickname: string;
+  public nickname?: string;
 
   @Column({
     default: false,

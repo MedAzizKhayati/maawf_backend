@@ -5,13 +5,19 @@ import { Message } from './message.entity';
 
 @Entity()
 export class GroupChat extends GenericEntity {
-  @Column()
-  name: string;
+  @Column({
+    nullable: true,
+  })
+  name?: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   picture: string;
 
-  @Column()
+  @Column({
+    default: false,
+  })
   isPrivate: boolean;
 
   @OneToOne(() => Message, {
@@ -20,7 +26,7 @@ export class GroupChat extends GenericEntity {
     onDelete: 'SET NULL',
   })
   @JoinColumn()
-  lastMessage: Message;
+  lastMessage?: Message;
 
   @OneToMany(() => GroupChatToProfile, groupChatToProfile => groupChatToProfile.groupChat, {
     eager: true,
