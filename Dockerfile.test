@@ -1,0 +1,16 @@
+FROM node:alpine AS testing
+
+WORKDIR /usr/src/app
+
+COPY package.json ./
+
+COPY yarn.lock ./
+
+RUN yarn
+
+COPY . . 
+
+RUN yarn build
+
+# run yarn test and yarn test:e2e
+CMD ["yarn", "test", "--forceExit"]

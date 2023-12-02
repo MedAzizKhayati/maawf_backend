@@ -4,6 +4,7 @@ import { ProfileService } from '@/profile/profile.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatService } from './chat.service';
 import { GroupChat } from './entities/chat.entity';
+import { Gender } from '@/profile/enums/gender.enum';
 
 describe('ChatService', () => {
   let chatService: ChatService;
@@ -31,8 +32,23 @@ describe('ChatService', () => {
   describe('create a group chat', () => {
     let profiles: Profile[] = [];
     beforeAll(async () => {
-      profiles = await profileService.findAll();
+      await Promise.all(
+        Array(4)
+          .fill(0)
+          .map(async () => {
+            await profileService.create({
+              firstName: 'test' + Math.random(),
+              lastName: 'test',
+              gender: Gender.PREFER_NOT_TO_SAY,
+              publicKey: 'publicKey',
+            } as Profile);
+          }),
+      );
+    });
+
+    it('should find atleast 4 profiles', async () => {
       // we need at least 4 profiles to make this test work
+      profiles = await profileService.findAll();
       expect(profiles?.length).toBeGreaterThan(3);
     });
 
@@ -49,7 +65,7 @@ describe('ChatService', () => {
       await chatService.delete(groupChat.id);
 
       // check if group chat was deleted
-      const groupChat_ = await chatService.findOne(groupChat.id);
+      const groupChat_ = await chatService.findOne(groupChat.id).catch(() => null);
       expect(groupChat_).toBeFalsy();
     });
 
@@ -128,7 +144,7 @@ describe('ChatService', () => {
         await chatService.delete(groupChat.id);
 
         // check if group chat was deleted
-        const groupChat_ = await chatService.findOne(groupChat.id);
+        const groupChat_ = await chatService.findOne(groupChat.id).catch(() => null);
         expect(groupChat_).toBeFalsy();
       });
     });

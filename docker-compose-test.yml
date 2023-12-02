@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test
+    environment:
+      - APP_NAME=maawf
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - JWT_SECRET=maawf
+      - DB_USER=maawf
+      - DB_PASSWORD=maawf
+      - DB_NAME=maawf_db
+
   mysql-db:
     image: mysql:latest
     container_name: mysql-container
@@ -11,7 +25,7 @@ services:
       MYSQL_USER: maawf
       MYSQL_PASSWORD: maawf
     ports:
-      - "3306:3306"
+      - '3306:3306'
     volumes:
       - mysql-data:/var/lib/mysql
 

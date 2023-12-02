@@ -1,0 +1,8 @@
+.github
+dist
+k8s
+node_modules
+*.env
+*Dockerfile*
+README.md
+coverage

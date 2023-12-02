@@ -227,9 +227,9 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
     message =
       typeof message === 'string'
         ? await this.messageRepository.findOne({
-          where: { id: message },
-          relations: ['groupChat'],
-        })
+            where: { id: message },
+            relations: ['groupChat'],
+          })
         : message;
     profile = typeof profile === 'string' ? profile : profile.id;
     if (!(await this.isUserInGroupChat(message.groupChat, profile))) {
@@ -271,6 +271,7 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
     const groupChatToProfile = new GroupChatToProfile();
     groupChatToProfile.profile = typeof member === 'string' ? this.profileRepository.create({ id: member }) : member;
     groupChatToProfile.groupChat = this.groupChatRepository.create({ id });
+    groupChatToProfile.encryptedSymmetricKey = 'encryptedSymmetricKey'; // TODO: get the key from dto
     return this.groupChatToProfileRepo.save(groupChatToProfile).then(() => this.findOne(id));
   }
 
@@ -413,8 +414,9 @@ export class ChatService extends GenericsService<GroupChat, GroupChat, GroupChat
     const isUserInGroupChat = await this.isUserInGroupChat(groupChat, profile);
     if (!isUserInGroupChat) throw new ForbiddenException('You are not a member of this group chat');
 
-    const concernedProfiles = await this.getConcernedProfiles(id)
-      .then(profiles => profiles.map(profile => profile.id).filter(id => id !== profileId));
+    const concernedProfiles = await this.getConcernedProfiles(id).then(profiles =>
+      profiles.map(profile => profile.id).filter(id => id !== profileId),
+    );
     if (this.server)
       this.server.to(concernedProfiles).emit('typing', {
         groupChatId: id,

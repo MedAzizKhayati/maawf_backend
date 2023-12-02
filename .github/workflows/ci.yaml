@@ -1,0 +1,26 @@
+name: Ci/CD Pipeline
+
+env:
+  DOCKER_COMPOSE_FILE: 'docker-compose-test.yml'
+  TAG: ${{ github.sha }}
+
+on:
+  push:
+    branches: ['dev']
+  pull_request:
+    branches: ['dev']
+
+jobs:
+  cicd-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Test Docker images
+        run: |
+          docker compose -f $DOCKER_COMPOSE_FILE pull
+          docker compose -f $DOCKER_COMPOSE_FILE build
+
+      - name: Run tests
+        run: docker compose -f $DOCKER_COMPOSE_FILE up --abort-on-container-exit --exit-code-from test --attach test
