@@ -6,7 +6,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   MessageBody,
-  ConnectedSocket
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Logger, UseGuards } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
@@ -21,38 +21,26 @@ import { SendMessageDto } from './dto/send-message.dto';
   namespace: 'chat',
 })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('ChatGateway');
 
-  constructor(
-    private chatService: ChatService
-  ) { }
+  constructor(private chatService: ChatService) {}
 
   @SubscribeMessage('connect-to-rooms')
-  enterGroupChat(
-    @ConnectedSocket() client: Socket,
-    @GetUser() user: User
-  ) {
+  enterGroupChat(@ConnectedSocket() client: Socket, @GetUser() user: User) {
     client.join(user.profile.id);
     this.logger.log(`Profile ${user.profile.id} connected to chat`);
     return true;
   }
 
   @SubscribeMessage('send-message')
-  handleMessage(
-    @MessageBody() payload: SendMessageDto,
-    @GetUser() user: User,
-  ) {
+  handleMessage(@MessageBody() payload: SendMessageDto, @GetUser() user: User) {
     this.logger.log(`Profile ${user.profile.id} sent message to Group:${payload.groupChatId}`);
     return this.chatService.sendMessage(payload, user.profile.id, []);
   }
 
   @SubscribeMessage('mark-as-seen')
-  markAsRead(
-    @MessageBody() messageId: string,
-    @GetUser() user: User,
-  ) {
+  markAsRead(@MessageBody() messageId: string, @GetUser() user: User) {
     this.chatService.markAsRead(messageId, user.profile.id);
     return true;
   }

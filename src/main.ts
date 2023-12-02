@@ -15,7 +15,7 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: "*",
+    origin: '*',
   });
 
   // Validation pipe

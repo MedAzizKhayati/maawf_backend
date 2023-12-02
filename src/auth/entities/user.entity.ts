@@ -6,43 +6,46 @@ import * as bcrypt from 'bcrypt';
 // https://online.visual-paradigm.com/app/diagrams/#LUML%20ANGULAR%20PROJECT
 @Entity()
 export class User extends GenericEntity {
-    @Column({
-        unique: true
-    })
-    email: string;
+  @Column({
+    unique: true,
+  })
+  email: string;
 
-    @Column({
-        nullable: false
-    })
-    password: string;
+  @Column({
+    nullable: false,
+  })
+  password: string;
 
-    @Column()
-    phonenumber: string;
+  @Column()
+  phonenumber: string;
 
-    @Column({
-        type: 'longtext'
-    })
-    encryptedPrivateKey: string;
+  @Column({
+    type: 'longtext',
+  })
+  encryptedPrivateKey: string;
 
+  @OneToOne(() => Profile, {
+    cascade: true,
+    eager: true,
+  })
+  @JoinColumn()
+  profile: Profile;
 
-    @OneToOne(
-        () => Profile,
-        {
-            cascade: true,
-            eager: true,
-        }
-    )
-    @JoinColumn()
-    profile: Profile;
+  @Column({
+    type: 'enum',
+    enum: ['enabled', 'disabled', 'banned'],
+    default: 'enabled',
+  })
+  status: 'enabled' | 'disabled' | 'banned';
 
-    @BeforeInsert()
-    @BeforeUpdate()
-    async updatePassword() {
-        this.password = await this.hashPassword(this.password);
-    }
+  @BeforeInsert()
+  @BeforeUpdate()
+  async updatePassword() {
+    this.password = await this.hashPassword(this.password);
+  }
 
-    private async hashPassword(password: string): Promise<string> {
-        const salt = await bcrypt.genSalt();
-        return await bcrypt.hash(password, salt);
-    }
+  private async hashPassword(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    return await bcrypt.hash(password, salt);
+  }
 }

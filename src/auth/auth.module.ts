@@ -8,6 +8,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import * as dotenv from 'dotenv';
+import { LdapService } from './ldap.service';
+import { CryptoService } from './crypto.service';
+
 dotenv.config();
 
 @Module({
@@ -19,10 +22,8 @@ dotenv.config();
       signOptions: { expiresIn: '15d' },
     }),
   ],
-  controllers: [
-    AuthController,
-  ],
-  providers: [AuthService, JwtStrategy, UserService],
-  exports: [UserService]
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, UserService, LdapService, CryptoService],
+  exports: [UserService, LdapService],
 })
-export class AuthModule { }
+export class AuthModule {}
