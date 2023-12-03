@@ -1,4 +1,4 @@
-name: Ci/CD Pipeline
+name: Ci/CD CD Pipeline
 
 env:
   DOCKER_COMPOSE_FILE: 'docker-compose-test.yml'
@@ -15,7 +15,7 @@ on:
     branches: ['dev']
 
 jobs:
-  cicd-pipeline:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,11 @@ jobs:
       - name: Run tests
         run: docker compose -f $DOCKER_COMPOSE_FILE up --abort-on-container-exit --exit-code-from test --attach test
 
+  build-push:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -43,6 +48,11 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-push
+
+    steps:
       - name: Authenticate to AWS
         uses: aws-actions/configure-aws-credentials@v1
         with:
