@@ -1,7 +1,7 @@
 namespace: testing
 
 backend:
-  domain: api.test.maawf.tech
+  domain: api-test.maawf.tech
 
 frontend:
   domain: test.maawf.tech
