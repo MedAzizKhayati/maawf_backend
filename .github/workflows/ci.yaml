@@ -6,7 +6,7 @@ env:
   TAG: ${{ github.sha }}
   REGION: 'eu-central-1'
   CLUSTER_NAME: 'maawf-cluster'
-  APP_NAME: 'maawf'
+  APP_NAME: 'maawf-backend'
 
 on:
   push:
