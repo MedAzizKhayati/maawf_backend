@@ -27,14 +27,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
 
-      - name: Checkout directory
-        run: |
-          cd .infrastructure
-          ls -la
-
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
-        run: terraform init
+        run: |
+          cd .infrastucture
+          terraform init
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: |
+          cd .infrastucture
+          terraform destroy -auto-approve
