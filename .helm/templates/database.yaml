@@ -1,0 +1,42 @@
+# templates/mysql-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.db.host }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.db.host }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.db.host }}
+    spec:
+      containers:
+        - name: {{ .Values.db.host }}
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: {{ .Values.db.password }}
+            - name: MYSQL_DATABASE
+              value: {{ .Values.db.name }}
+            - name: MYSQL_USER
+              value: {{ .Values.db.user }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.db.password }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.db.host }}
+spec:
+  selector:
+    app: {{ .Values.db.host }}
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.backend.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.backend.name }}
+    spec: # Pod spec
+      containers:
+        - name: {{ .Values.backend.name }}
+          image: "{{ .Values.backend.image.name }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: "Always"
+          ports:
+          - containerPort: 3000
+          env:
+          - name: APP_NAME
+            value: {{ .Values.appName }}
+          - name: DB_HOST
+            value: {{ .Values.db.host }}
+          - name: DB_PORT
+            value: "{{ .Values.db.port }}"
+          - name: DB_USER
+            value: {{ .Values.db.user }}
+          - name: DB_PASSWORD
+            value: {{ .Values.db.password }}
+          - name: DB_NAME
+            value: {{ .Values.db.name }}
+          - name: JWT_SECRET
+            value: {{ .Values.backend.jwt_secret }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.backend.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.backend.port }}
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.backend.name }}

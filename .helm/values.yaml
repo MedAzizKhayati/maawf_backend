@@ -1,0 +1,27 @@
+appName: maawf
+namespace: default
+
+backend:
+  name: maawf-backend
+  jwt_secret: maawf
+  port: 5000
+  image:
+    name: medazizkhayati/maaawf_backend
+    tag: 3af79d752516fa7f7b5d79ec3de2fd41d10348cd
+
+db:
+  host: maawf-db
+  port: "3306"
+  user: maawf_user
+  password: maawf
+  name: maawf
+
+frontend:
+  name: maawf-frontend
+  port: 3000
+  image:
+    name: medazizkhayati/maaawf_frontend
+    tag: a3fcbd164c2b728376b852c63eeca3a0e5f91ec3
+
+jwt:
+  secret: maawf
