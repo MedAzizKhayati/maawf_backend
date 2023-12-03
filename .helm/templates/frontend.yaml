@@ -19,6 +19,9 @@ spec:
           imagePullPolicy: "Always"
           ports:
           - containerPort: 80
+          env:
+            - name: "API_DOMAIN"
+              value: {{ .Values.backend.domain }}
 ---
 apiVersion: v1
 kind: Service

@@ -2,6 +2,7 @@ appName: maawf
 namespace: default
 
 backend:
+  domain: api.maawf.tech
   name: maawf-backend
   jwt_secret: maawf
   port: 5000
@@ -17,11 +18,12 @@ db:
   name: maawf
 
 frontend:
+  domain: maawf.tech
   name: maawf-frontend
   port: 3000
   image:
     name: medazizkhayati/maaawf_frontend
-    tag: a3fcbd164c2b728376b852c63eeca3a0e5f91ec3
+    tag: latest
 
 jwt:
   secret: maawf

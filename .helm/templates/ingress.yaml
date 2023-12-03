@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: api.maawf.tech
+    - host: {{ .Values.backend.domain }}}
       http:
         paths:
           - path: /
@@ -20,7 +20,7 @@ spec:
                 name: {{ .Values.backend.name }}
                 port:
                   number: {{ .Values.backend.port }}
-    - host: maawf.tech
+    - host: {{ .Values.frontend.domain }}
       http:
         paths:
           - path: /
