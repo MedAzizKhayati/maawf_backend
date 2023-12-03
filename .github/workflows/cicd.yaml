@@ -10,7 +10,7 @@ env:
 
 on:
   push:
-    branches: ['dev']
+    branches: ['dev', 'test']
   pull_request:
     branches: ['dev']
 
@@ -63,7 +63,7 @@ jobs:
     steps:
       - if: github.event_name == 'pull_request'
         run: exit 0
-        
+
       - uses: actions/checkout@v3
 
       - name: Authenticate to AWS
@@ -76,4 +76,9 @@ jobs:
       - name:
         run: |
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
-          helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
+
+          if [ $GIT_BRANCH == "test" ]; then
+            helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml --values .helm/values-test.yaml
+          else
+            helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
+          fi
