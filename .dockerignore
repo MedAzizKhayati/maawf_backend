@@ -3,6 +3,7 @@ dist
 k8s
 node_modules
 *.env
-*Dockerfile*
+Dockerfile*
+docker-compose.*
 README.md
 coverage

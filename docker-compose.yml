@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  maawf_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maawf_api
+    environment:
+      - APP_NAME=maawf
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - JWT_SECRET=maawf
+      - DB_USER=maawf
+      - DB_PASSWORD=maawf
+      - DB_NAME=maawf_db
+    depends_on:
+      - mysql-db
+    ports:
+      - '5000:3000'
+
+  mysql-db:
+    image: mysql:latest
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: maawf
+      MYSQL_DATABASE: maawf_db
+      MYSQL_USER: maawf
+      MYSQL_PASSWORD: maawf
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
+    driver: local
