@@ -53,5 +53,4 @@ jobs:
       - name:
         run: |
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
-          helm upgrade --install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml ||
-          helm install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml
+          helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml

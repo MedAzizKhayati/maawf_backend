@@ -7,7 +7,7 @@ backend:
   port: 5000
   image:
     name: medazizkhayati/maaawf_backend
-    tag: 3af79d752516fa7f7b5d79ec3de2fd41d10348cd
+    tag: latest
 
 db:
   host: maawf-db
