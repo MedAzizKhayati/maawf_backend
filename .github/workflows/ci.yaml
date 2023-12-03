@@ -2,8 +2,11 @@ name: Ci/CD Pipeline
 
 env:
   DOCKER_COMPOSE_FILE: 'docker-compose-test.yml'
-  APP_NAME: 'maaawf_backend'
+  IMAGE_NAME: 'maaawf_backend'
   TAG: ${{ github.sha }}
+  REGION: 'eu-central-1'
+  CLUSTER_NAME: 'maaawf-cluster'
+  APP_NAME: 'maaawf'
 
 on:
   push:
@@ -37,5 +40,18 @@ jobs:
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Authenticate to AWS
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ env.REGION }}
+
+      - name: Deploy to EKS using HELM
+        run: helm upgrade --install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml || helm install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml
