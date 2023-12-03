@@ -30,10 +30,10 @@ jobs:
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
         run: |
-          cd .infrastucture
+          cd .infrastructure
           terraform init
 
       - name: Terraform Destroy
         run: |
-          cd .infrastucture
+          cd .infrastructure
           terraform destroy -auto-approve
