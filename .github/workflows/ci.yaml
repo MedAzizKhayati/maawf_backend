@@ -5,8 +5,8 @@ env:
   IMAGE_NAME: 'maaawf_backend'
   TAG: ${{ github.sha }}
   REGION: 'eu-central-1'
-  CLUSTER_NAME: 'maaawf-cluster'
-  APP_NAME: 'maaawf'
+  CLUSTER_NAME: 'maawf-cluster'
+  APP_NAME: 'maawf'
 
 on:
   push:
@@ -50,8 +50,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.REGION }}
 
-      - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ env.REGION }}
-
-      - name: Deploy to EKS using HELM
-        run: helm upgrade --install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml || helm install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml
+      - name:
+        run: |
+          aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
+          helm upgrade --install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml ||
+          helm install ${{ env.APP_NAME }} ./helm --values ./helm/values.yaml
