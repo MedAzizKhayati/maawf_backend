@@ -78,7 +78,7 @@ jobs:
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
 
           if [ ${{ github.ref }} == 'refs/heads/test' ]; then
-            helm upgrade --install ${{ env.APP_NAME }}-test .helm --values .helm/values.yaml --values .helm/values-test.yaml
+            helm upgrade --install ${{ env.APP_NAME }}-test .helm --values .helm/values.yaml --values .helm/values-test.yaml --namespace testing --create-namespace
           else
             helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
           fi
