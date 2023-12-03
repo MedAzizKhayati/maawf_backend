@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: {{ .Values.backend.domain }}}
+    - host: {{ .Values.backend.domain }}
       http:
         paths:
           - path: /
