@@ -36,6 +36,9 @@ jobs:
     needs: test
 
     steps:
+      - if: github.event_name == 'pull_request' || github.ref == 'refs/heads/test'
+        run: exit 0
+
       - if: github.event_name == 'pull_request'
         run: exit 0
 
