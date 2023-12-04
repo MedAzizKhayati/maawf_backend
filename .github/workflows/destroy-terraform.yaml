@@ -27,7 +27,7 @@ jobs:
 
       - name: Destroy the EKS cluster
         run: |
-          aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
+          aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} ||true
           helm uninstall ${{ env.APP_NAME }} || true
           helm uninstall  ${{ env.APP_NAME }}-test -n testing || true
 
