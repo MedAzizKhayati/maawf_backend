@@ -61,6 +61,13 @@ jobs:
     needs: build-push
 
     steps:
+      - name: Check if terraform state file exists
+        run: |
+          if [ ! -f .infrastructure/terraform.tfstate ]; then
+            echo "No state file found"
+            exit 1
+          fi
+
       - if: github.event_name != 'pull_request'
         uses: actions/checkout@v3
 
@@ -73,7 +80,7 @@ jobs:
           aws-region: ${{ env.REGION }}
 
       - if: github.event_name != 'pull_request'
-        name:
+        name: Deploy to AWS EKS
         run: |
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
 

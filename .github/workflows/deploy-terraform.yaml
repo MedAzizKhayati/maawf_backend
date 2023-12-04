@@ -2,8 +2,6 @@ name: 'Terraform Destroy'
 
 env:
   REGION: 'eu-central-1'
-  CLUSTER_NAME: 'maawf-cluster'
-  APP_NAME: 'maawf-backend'
 
 on:
   workflow_dispatch:
@@ -25,12 +23,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.REGION }}
 
-      - name: Destroy the EKS cluster
-        run: |
-          aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
-          helm uninstall ${{ env.APP_NAME }} || true
-          helm uninstall  ${{ env.APP_NAME }}-test -n testing || true
-
       # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -41,10 +33,10 @@ jobs:
           cd .infrastructure
           terraform init
 
-      - name: Terraform Destroy
+      - name: Terraform Apply
         run: |
           cd .infrastructure
-          terraform destroy -auto-approve
+          terraform apply -auto-approve
 
       - name: Push the new tfState file to the repository
         run: |
@@ -52,5 +44,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git add .
-          git commit -m "ci: executed Terraform destroy"
+          git commit -m "ci: executed Terraform deploy"
           git push
