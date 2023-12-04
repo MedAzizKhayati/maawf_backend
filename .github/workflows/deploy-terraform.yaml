@@ -1,4 +1,4 @@
-name: 'Terraform Destroy'
+name: 'Terraform Deploy'
 
 env:
   REGION: 'eu-central-1'
