@@ -10,7 +10,6 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to AWS EKS
     runs-on: ubuntu-latest
 
     steps:
@@ -26,4 +25,11 @@ jobs:
       - name: Deploy to AWS EKS
         run: |
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} 
-          helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
+
+          if [ ${{ github.ref }} == 'refs/heads/test' ]; then
+            helm upgrade --install ${{ env.APP_NAME }}-test .helm --values .helm/values.yaml --values .helm/values-test.yaml --namespace testing --create-namespace
+          elif [ ${{ github.ref }} == 'refs/heads/dev' ]; then
+            helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml --values .helm/values-dev.yaml --namespace development --create-namespace
+          elif [ ${{ github.ref }} == 'refs/heads/prod' ]; then
+            helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
+          fi

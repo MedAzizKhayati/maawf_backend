@@ -1,0 +1,74 @@
+name: Ci/CD Pipeline
+
+env:
+  DOCKER_COMPOSE_FILE: 'docker-compose-test.yml'
+  IMAGE_NAME: 'maaawf_backend'
+  TAG: ${{ github.sha }}
+  REGION: 'eu-central-1'
+  CLUSTER_NAME: 'maawf-cluster'
+  APP_NAME: 'maawf-backend'
+
+on:
+  push:
+    branches: ['dev', 'test', 'prod']
+  pull_request:
+    branches: ['dev']
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Test Docker images
+        run: |
+          docker compose -f $DOCKER_COMPOSE_FILE pull
+          docker compose -f $DOCKER_COMPOSE_FILE build
+
+      - name: Run tests
+        run: docker compose -f $DOCKER_COMPOSE_FILE up --abort-on-container-exit --exit-code-from test --attach test
+
+  build-push:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    name: Build and push Docker images
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    if: github.event_name == 'pull_request'
+    name: Trigger deployment
+    needs: build-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger deploy workflow
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
+        with:
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.repository }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow_file_name: deploy.yaml
+          ref: ${{ github.ref }}
+          wait_interval: 10
+          propagate_failure: true
+          trigger_workflow: true
+          wait_workflow: true
