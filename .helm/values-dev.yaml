@@ -1,0 +1,7 @@
+namespace: development
+
+backend:
+  domain: api-dev.maawf.tech
+
+frontend:
+  domain: dev.maawf.tech
