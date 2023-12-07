@@ -10,8 +10,8 @@ export class AppController {
     return this.appService.healthCheck();
   }
 
-  @Post()
-  healthCheckPost(@Body() body: any) {
-    return body;
-  }
+  // @Post()
+  // healthCheckPost(@Body() body: any) {
+  //   return body;
+  // }
 }
