@@ -32,7 +32,7 @@ jobs:
           if [ ${{ github.ref }} == 'refs/heads/test' ]; then
             helm upgrade --install ${{ env.APP_NAME }}-test .helm --values .helm/values.yaml --values .helm/values-test.yaml --namespace testing --create-namespace
           elif [ ${{ github.ref }} == 'refs/heads/dev' ]; then
-            helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml --values .helm/values-dev.yaml --namespace development --create-namespace
+            helm upgrade --install ${{ env.APP_NAME }}-dev .helm --values .helm/values.yaml --values .helm/values-dev.yaml --namespace development --create-namespace
           elif [ ${{ github.ref }} == 'refs/heads/prod' ]; then
             helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
           fi
