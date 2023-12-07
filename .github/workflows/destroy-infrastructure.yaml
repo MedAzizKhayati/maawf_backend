@@ -47,7 +47,7 @@ jobs:
       - name: Terraform Destroy
         run: |
           cd .infrastructure
-          terraform destroy -auto-approve || true
+          terraform destroy -auto-approve
 
       - name: Push the new tfState file to the repository
         run: |
