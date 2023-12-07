@@ -66,15 +66,7 @@ resource "aws_subnet" "public-eu-central-1b" {
   }
 }
 
-resource "aws_eip" "nat" {
-  vpc = true
-  tags = {
-    Name = "nat"
-  }
-}
-
 resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public-eu-central-1a.id
 
   tags = {
