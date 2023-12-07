@@ -30,11 +30,11 @@ jobs:
           helm uninstall ${{ env.APP_NAME }} || true
           helm uninstall  ${{ env.APP_NAME }}-test -n testing || true
           helm uninstall ${{ env.APP_NAME }}-dev -n development || true
-      
+
       - name: Wait for 30 seconds to allow the cluster to be deleted
         run: |
           sleep 30
-        
+
       # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -51,6 +51,7 @@ jobs:
           terraform destroy -auto-approve || true
 
       - name: Push the new tfState file to the repository
+        if: always()
         run: |
           cd .infrastructure
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
