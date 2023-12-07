@@ -45,6 +45,7 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#deploying">Deploying</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -121,6 +122,15 @@ Start development server
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<!-- Deploying -->
+
+## Deploying
+To automatically run the deployment from dev all the way to production, you can use the following command:
+- bash
+```sh
+   git checkout dev && git pull && git push && git checkout test && git merge dev && git push && git checkout prod && git merge test && git push && git checkout dev
+```
+
 <!-- ROADMAP -->
 
 ## Roadmap
@@ -130,7 +140,7 @@ Start development server
 - [x] Add Friendship and Friends Module
 - [x] Add Group chats
 - [ ] Add User Profile (in works)
-- [ ] Add User Feed (homepage)
+- [x] Add User Feed (homepage)
 
 See the [open issues](https://github.com/Dopeamin/project_angular_backend/issues) for a full list of proposed features (and known issues).
 
