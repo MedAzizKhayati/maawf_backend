@@ -17,7 +17,7 @@ on:
 jobs:
   test:
     # skip if commit starts with ci: or infra:
-    if: github.event_name != 'pull_request' && !startsWith(github.event.head_commit.message, 'ci:') && !startsWith(github.event.head_commit.message, 'infra:')
+    if: github.event_name != 'pull_request' && !startsWith(github.event.head_commit.message, 'infra:')
     name: Test
     runs-on: ubuntu-latest
 
@@ -66,7 +66,7 @@ jobs:
         uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: ${{ github.repository_owner }}
-          repo: ${{ github.repository }}
+          repo: maawf_backend
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow_file_name: deploy.yaml
           ref: ${{ github.ref }}
