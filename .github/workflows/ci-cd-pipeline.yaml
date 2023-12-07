@@ -54,7 +54,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   deploy:
-    if: github.event_name == 'pull_request'
+    if: github.event_name != 'pull_request'
     name: Trigger deployment
     needs: build-push
     runs-on: ubuntu-latest
