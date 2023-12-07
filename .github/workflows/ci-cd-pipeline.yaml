@@ -16,6 +16,8 @@ on:
 
 jobs:
   test:
+    # skip if commit starts with ci: or infra:
+    if: github.event_name != 'pull_request' && !startsWith(github.event.head_commit.message, 'ci:') && !startsWith(github.event.head_commit.message, 'infra:')
     name: Test
     runs-on: ubuntu-latest
 
