@@ -29,6 +29,7 @@ jobs:
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} ||true
           helm uninstall ${{ env.APP_NAME }} || true
           helm uninstall  ${{ env.APP_NAME }}-test -n testing || true
+          helm uninstall ${{ env.APP_NAME }}-dev -n development || true
       
       - name: Wait for 30 seconds to allow the cluster to be deleted
         run: |
@@ -47,7 +48,7 @@ jobs:
       - name: Terraform Destroy
         run: |
           cd .infrastructure
-          terraform destroy -auto-approve
+          terraform destroy -auto-approve || true
 
       - name: Push the new tfState file to the repository
         run: |
