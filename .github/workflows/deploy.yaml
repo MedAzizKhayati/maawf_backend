@@ -36,3 +36,33 @@ jobs:
           elif [ ${{ github.ref }} == 'refs/heads/prod' ]; then
             helm upgrade --install ${{ env.APP_NAME }} .helm --values .helm/values.yaml
           fi
+  notify:
+    runs-on: ubuntu-latest
+    name: Slack Notification Success
+    needs: [deploy]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: good
+          SLACK_MESSAGE: 'Deployment to ${{ github.ref }} namespace has succeeded.'
+          SLACK_TITLE: Deployment Successful
+          SLACK_USERNAME: GitHub Actions
+
+  notify-failure:
+    if: failure()
+    runs-on: ubuntu-latest
+    name: Slack Notification Failure
+    needs: [deploy]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: danger
+          SLACK_MESSAGE: 'Deployment to ${{ github.ref }} namespace has failed.'
+          SLACK_TITLE: Deployment Failed
+          SLACK_USERNAME: GitHub Actions
