@@ -10,6 +10,8 @@ spec:
       app: {{ .Values.backend.name }}
   template:
     metadata:
+      annotations:
+        timestamp: "{{ .Values.timestamp }}"
       labels:
         app: {{ .Values.backend.name }}
     spec: # Pod spec
